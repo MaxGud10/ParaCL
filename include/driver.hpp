@@ -1,9 +1,9 @@
 #pragma once 
 
-# include <string>
-# include <map>
+#include <string>
+#include <map>
 
-# include "parser.hpp"
+#include "parser.hpp"
 
 extern int yy_flex_debug;
 extern int yydebug;
@@ -21,9 +21,17 @@ public:
 	int 			result;
 	std::string 	file;
 	yy::location 	location;
-	std::map<std::string, int> variables;
+	std::vector<std::map<std::string, int>> var_table;
+	size_t cur_scope_id = 0;
+
+	using Variables = std::map<std::string, int>;
 
 public:
+
+  	Driver()
+	{
+		var_table.push_back(Variables{});
+	}
 
 	int parse(const std::string &f)
 	{
@@ -36,7 +44,7 @@ public:
 		yy::parser parse(*this);
 
 		#if YYDEBUG
-    		parse.set_debug_level(YYDEBUG);
+    	parse.set_debug_level(YYDEBUG);
 		#endif
 
 		int res = parse();

@@ -44,9 +44,14 @@ BLANK 	[ \t\r]
 "("			return yy::parser::make_LPAREN(loc);
 ")"			return yy::parser::make_RPAREN(loc);
 "="			return yy::parser::make_ASSIGN(loc);
+"?"			return yy::parser::make_READ(loc);
+"print"		return yy::parser::make_PRINT(loc);
+"{"			return yy::parser::make_LCPAREN(loc);
+"}"			return yy::parser::make_RCPAREN(loc);
+";"			return yy::parser::make_SEMIC(loc);
 
 {INT}		return make_NUMBER (yytext, loc);
-{ID}		return yy::parser::make_IDENTIFIER (yytext, loc);
+{ID}		return yy::parser::make_ID (yytext, loc);
 
 .			{
 				throw yy::parser::syntax_error
@@ -66,4 +71,4 @@ make_NUMBER (const std::string &s, const yy::parser::location_type& loc)
 		throw yy::parser::syntax_error (loc, "integer is out of range: " + s);
 
 	return yy::parser::make_NUMBER (static_cast<int>(num), loc);
-}
+}		

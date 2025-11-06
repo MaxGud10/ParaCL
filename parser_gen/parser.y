@@ -34,37 +34,87 @@
 	SLASH	"/"
 	LPAREN	"("
 	RPAREN	")"
+	READ	"?"
+	PRINT	"print"
+	LCPAREN	"{"
+	RCPAREN	"}"
+	SEMIC	";"
 ;
 
-%token <std::string> IDENTIFIER "identifier"
+%token <std::string> ID "identifier"
 %token <int> NUMBER "number"
 
-%nterm <int> exp
+%nterm <int> Expr
 
 %printer { yyo << $$; } <*>;
 
+%nonassoc "print"
+%left "="
 %left "+" "-";
 %left "*" "/";
+%nonassoc UMINUS
 
 %%
 
-unit: assignments exp	{ drv.result = $2; };
+Program: /* nothing */
+	   | Statements YYEOF
+	   ;
 
-assignments:
-	%empty {}
-| assignments assignment {};
+Statements: Statement
+		  | Statements Statement
+		  ;
 
-assignment:
-	IDENTIFIER "=" exp { drv.variables[$1] = $3; };
+Statement: /* nothing */
+		 | Expr ";"
+		 | Scope
+		 ;
 
-exp:
-	NUMBER
-| IDENTIFIER	{ $$ = drv.variables[$1]; }
-| exp "+" exp	 { $$ = $1 + $3; }
-| exp "-" exp	 { $$ = $1 - $3; }
-| exp "*" exp	 { $$ = $1 * $3; }
-| exp "/" exp	 { $$ = $1 / $3; }
-| "(" exp ")"	 { $$ = $2; }
+Scope: StartScope Statements EndScope
+     | StartScope EndScope
+     ;
+
+StartScope: "{"
+{
+	++drv.cur_scope_id;
+	drv.var_table.push_back(Driver::Variables{});
+};
+
+EndScope: "}"
+{
+	--drv.cur_scope_id;
+	drv.var_table.push_back(Driver::Variables{});
+};
+
+
+Expr: Expr "+" Expr			{ $$ = $1 + $3; }
+   	| Expr "-" Expr			{ $$ = $1 - $3; }
+   	| Expr "*" Expr			{ $$ = $1 * $3; }
+  	| Expr "/" Expr			{ $$ = $1 / $3; }
+  	| "(" Expr ")"			{ $$ = $2;      }
+  	| "-" Expr %prec UMINUS { $$ = - $2;    }
+  	| NUMBER				{ $$ = $1;      }
+  	| 	ID
+		{
+			for (int scope_id = static_cast<int>(drv.cur_scope_id); scope_id >= 0; --scope_id)
+			{
+				auto iter = drv.var_table[scope_id].find($1);
+
+				if (iter == drv.var_table[scope_id].end())
+					if (scope_id == 0)
+						throw yy::parser::syntax_error(drv.location, "Unknown identifier\n");
+					else continue;
+				else
+				{
+					$$ = iter->second;
+					break;
+				}
+
+			}
+		}
+	| "?"					{ std::cin >> $$; }
+   	| ID "=" Expr			{ drv.var_table[drv.cur_scope_id][$1] = $3; }
+	| "print" Expr			{ std::cout << $2; }
+   	;
 
 %%
 
