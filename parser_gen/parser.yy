@@ -14,7 +14,6 @@
 	class driver;
 }
 
-// The parsing context.
 %param { driver& drv }
 
 %locations
@@ -23,17 +22,17 @@
 %define parse.error detailed
 %define parse.lac full
 
-%code {
-# include "driver.hh"
+%code
+{
+	#include "driver.hh"
 }
 
-%define api.token.prefix {TOK_}
 %token
 	ASSIGN	":="
-	MINUS	 "-"
-	PLUS		"+"
-	STAR		"*"
-	SLASH	 "/"
+	MINUS	"-"
+	PLUS	"+"
+	STAR	"*"
+	SLASH	"/"
 	LPAREN	"("
 	RPAREN	")"
 ;
@@ -49,7 +48,7 @@
 unit: assignments exp	{ drv.result = $2; };
 
 assignments:
-	%empty								 {}
+	%empty {}
 | assignments assignment {};
 
 assignment:
