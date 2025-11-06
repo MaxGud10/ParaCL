@@ -113,7 +113,7 @@ Expr: Expr "+" Expr			{ $$ = $1 + $3; }
 		}
 	| "?"					{ std::cin >> $$; }
    	| ID "=" Expr			{ drv.var_table[drv.cur_scope_id][$1] = $3; }
-	| "print" Expr			{ std::cout << $2; }
+	| "print" Expr			{ drv.out << $2; }
    	;
 
 %%

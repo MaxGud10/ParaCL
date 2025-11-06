@@ -2,23 +2,24 @@
 #include "log.h"
 
 #include <iostream>
+#include <fstream>
 
 int main(int argc, char **argv)
 {
+	MSG("MACROSES:\n");
+	LOG("YYDEBUG: {}\n", YYDEBUG);
+	LOG("YY_FLEX_DEBUG: {}\n", YY_FLEX_DEBUG);
+
     int res = 0;
 
-	MSG("MACROSES:\n");
-	LOG("{}\n", YYDEBUG);
-	LOG("{}\n", YY_FLEX_DEBUG);
+	std::ofstream out("output.txt");
 
-    Driver drv;
+	if (!out.is_open()) return -1;
+
+    Driver drv(out);
 
     for (int i = 1; i < argc; ++i)
-        if (!drv.parse(argv[i]))
-            std::cout << drv.result << '\n';
-            
-        else
-            res = 1;
+    	res = drv.parse(argv[i]);
 
     return res;
 }

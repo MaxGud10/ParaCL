@@ -1,7 +1,8 @@
-#pragma once 
+#pragma once
 
 #include <string>
 #include <map>
+#include <ostream>
 
 #include "parser.hpp"
 
@@ -9,7 +10,7 @@ extern int yy_flex_debug;
 extern int yydebug;
 extern FILE* yyin;
 
-# define YY_DECL \
+#define YY_DECL \
 	yy::parser::symbol_type yylex (Driver& drv)
 
 YY_DECL;
@@ -21,14 +22,14 @@ public:
 	int 			result;
 	std::string 	file;
 	yy::location 	location;
+	std::ostream& 	out;
 	std::vector<std::map<std::string, int>> var_table;
 	size_t cur_scope_id = 0;
 
 	using Variables = std::map<std::string, int>;
 
 public:
-
-  	Driver()
+  	Driver(std::ostream& _out = std::cout) : out(_out)
 	{
 		var_table.push_back(Variables{});
 	}

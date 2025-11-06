@@ -1,6 +1,6 @@
-#pragma once 
+#pragma once
 
-#include "lib.h"
+#include "driver.hpp"
 
 namespace test_utils
 {
@@ -8,21 +8,16 @@ namespace test_utils
 namespace detail
 {
 
-template <typename T> std::string get_result(std::string_view file_name)
+template <typename T> 
+std::string get_result(std::string_view file_name)
 {
-    std::ifstream test_data;
+	int res = 0;
 
-    test_data.open(std::string(file_name));
+    Driver drv;
 
-    if (!test_data.is_open())
-    {
-        LOG("Can't open {}\n", file_name);
-        throw;
-    }
+	res = drv.parse(file_name);
 
-    std::stringstream result;
-
-    // get result using lib
+	EXPEXT_EQ(res, 0);
 
     return result.str();
 }
