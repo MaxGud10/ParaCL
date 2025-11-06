@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(Main)
+project(ParaCL)
 
 enable_testing()
 
@@ -93,38 +93,39 @@ find_package(FLEX REQUIRED)
 set(BISON_INPUT ${CMAKE_SOURCE_DIR}/parse_gen/parser.yy)
 set(FLEX_INPUT ${CMAKE_SOURCE_DIR}/parse_gen/lexer.ll)
 
-BISON_TARGET(MyParser ${BISON_INPUT} ${CMAKE_BINARY_DIR}/parser/parser.cpp
+BISON_TARGET(Parser ${BISON_INPUT} ${CMAKE_BINARY_DIR}/parser/parser.cpp
     COMPILE_FLAGS "--defines=${CMAKE_BINARY_DIR}/parser/parser.hh")
 
-FLEX_TARGET(MyLexer ${FLEX_INPUT} ${CMAKE_BINARY_DIR}/parser/lexer.cpp)
+FLEX_TARGET(Lexer ${FLEX_INPUT} ${CMAKE_BINARY_DIR}/parser/lexer.cpp)
 
-ADD_FLEX_BISON_DEPENDENCY(MyLexer MyParser)
+ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
 
 
-add_executable(lib.x ./main.cpp
-    ${CMAKE_BINARY_DIR}/parser/lexer.cpp
-    ${BISON_MyParser_OUTPUTS}
+add_executable(paracl.x ./main.cpp
+    ${FLEX_Lexer_OUTPUTS}
+    ${BISON_Parser_OUTPUTS}
 )
 
-target_include_directories(lib.x PRIVATE
+target_include_directories(paracl.x PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_BINARY_DIR}/parser
+	${CMAKE_SOURCE_DIR}/utils/include
 )
 
 if(ENABLE_LOGGING)
-    target_compile_definitions(lib.x PRIVATE ENABLE_LOGGING)
+    target_compile_definitions(paracl.x PRIVATE ENABLE_LOGGING)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(lib.x PRIVATE DEBUG)
+    target_compile_definitions(paracl.x PRIVATE DEBUG)
 
-	target_compile_definitions(lib.x PRIVATE YY_FLEX_DEBUG=1 YYDEBUG=1)
+	target_compile_definitions(paracl.x PRIVATE YY_FLEX_DEBUG=1 YYDEBUG=1)
 
-    target_compile_options(lib.x PRIVATE ${DEBUG_COMPILE_OPTIONS})
-    target_link_options(lib.x PRIVATE
+    target_compile_options(paracl.x PRIVATE ${DEBUG_COMPILE_OPTIONS})
+    target_link_options(paracl.x PRIVATE
         -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
     )
 else()
-    target_compile_options(lib.x PRIVATE ${RELEASE_COMPILE_OPTIONS})
-	target_compile_definitions(lib.x PRIVATE YY_FLEX_DEBUG=0 YYDEBUG=0)
+    target_compile_options(paracl.x PRIVATE ${RELEASE_COMPILE_OPTIONS})
+	target_compile_definitions(paracl.x PRIVATE YY_FLEX_DEBUG=0 YYDEBUG=0)
 endif()

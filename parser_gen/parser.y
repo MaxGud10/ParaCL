@@ -15,14 +15,14 @@
 %code requires
 {
 	#include <string>
-	class driver;
+	class Driver;
 }
 
-%param { driver& drv }
+%param { Driver& drv }
 
 %code
 {
-	#include "driver.hh"
+	#include "driver.hpp"
 }
 
 %define api.token.prefix {TOK_}

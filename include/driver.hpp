@@ -1,32 +1,29 @@
-#pragma once
+#pragma once 
 
 # include <string>
 # include <map>
 
-# include "parser.hh"
+# include "parser.hpp"
 
 extern int yy_flex_debug;
-// extern int yydebug;
+extern int yydebug;
 extern FILE* yyin;
 
 # define YY_DECL \
-	yy::parser::symbol_type yylex (driver& drv)
+	yy::parser::symbol_type yylex (Driver& drv)
 
 YY_DECL;
 
 
-class driver
+class Driver
 {
-  public:
+public:
+	int 			result;
+	std::string 	file;
+	yy::location 	location;
 	std::map<std::string, int> variables;
 
-	int result;
-
-	std::string file;
-
-	yy::location location;
-
-  public:
+public:
 
 	int parse(const std::string &f)
 	{
@@ -36,9 +33,11 @@ class driver
 
 		scan_begin();
 
-		// yydebug = YYDEBUG;
-
 		yy::parser parse(*this);
+
+		#if YYDEBUG
+    		parse.set_debug_level(YYDEBUG);
+		#endif
 
 		int res = parse();
 
