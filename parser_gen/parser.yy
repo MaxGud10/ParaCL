@@ -53,23 +53,22 @@ unit: assignments exp	{ drv.result = $2; };
 assignments:
 	%empty {}
 | assignments assignment {};
- 
+
 assignment:
 	IDENTIFIER "=" exp { drv.variables[$1] = $3; };
 
 exp:
-	"number"
-| IDENTIFIER	 { $$ = drv.variables[$1]; }
-| exp "+" exp	 { $$ = $1 + $3;           }
-| exp "-" exp	 { $$ = $1 - $3;           }
-| exp "*" exp	 { $$ = $1 * $3;           }
-| exp "/" exp	 { $$ = $1 / $3;           }
-| "(" exp ")"	 { $$ = $2;                }
+	NUMBER
+| IDENTIFIER	{ $$ = drv.variables[$1]; }
+| exp "+" exp	 { $$ = $1 + $3; }
+| exp "-" exp	 { $$ = $1 - $3; }
+| exp "*" exp	 { $$ = $1 * $3; }
+| exp "/" exp	 { $$ = $1 / $3; }
+| "(" exp ")"	 { $$ = $2; }
 
 %%
 
-void
-yy::parser::error (const location_type& l, const std::string& m)
+void yy::parser::error (const location_type& loc, const std::string& msg)
 {
-	std::cerr << l << ": " << m << '\n';
+	std::cerr << loc << ": " << msg << '\n';
 }

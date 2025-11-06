@@ -66,20 +66,3 @@ make_NUMBER (const std::string &s, const yy::parser::location_type& loc)
 
 	return yy::parser::make_NUMBER (static_cast<int>(num), loc);
 }
-
-void driver::scan_begin()
-{
-	yy_flex_debug = trace_scanning;
-
-	if (file.empty () || file == "-") yyin = stdin;
-	else if (!(yyin = fopen (file.c_str (), "r")))
-	{
-		std::cerr << "cannot open " << file << ": " << strerror (errno) << '\n';
-		exit (EXIT_FAILURE);
-	}
-}
-
-void driver::scan_end ()
-{
-	fclose (yyin);
-}
