@@ -3,10 +3,14 @@
 %header
 
 %define api.token.raw
-
 %define api.token.constructor
 %define api.value.type variant
 %define parse.assert
+%define parse.trace
+%define parse.error detailed
+%define parse.lac full
+
+%locations
 
 %code requires
 {
@@ -16,19 +20,14 @@
 
 %param { driver& drv }
 
-%locations
-
-%define parse.trace
-%define parse.error detailed
-%define parse.lac full
-
 %code
 {
 	#include "driver.hh"
 }
 
+%define api.token.prefix {TOK_}
 %token
-	ASSIGN	":="
+	ASSIGN	"="
 	MINUS	"-"
 	PLUS	"+"
 	STAR	"*"
@@ -39,31 +38,34 @@
 
 %token <std::string> IDENTIFIER "identifier"
 %token <int> NUMBER "number"
+
 %nterm <int> exp
 
 %printer { yyo << $$; } <*>;
 
+%left "+" "-";
+%left "*" "/";
+
 %%
-%start unit;
+
 unit: assignments exp	{ drv.result = $2; };
 
 assignments:
 	%empty {}
 | assignments assignment {};
-
+ 
 assignment:
-	"identifier" ":=" exp { drv.variables[$1] = $3; };
+	IDENTIFIER "=" exp { drv.variables[$1] = $3; };
 
-%left "+" "-";
-%left "*" "/";
 exp:
 	"number"
-| "identifier"	{ $$ = drv.variables[$1]; }
-| exp "+" exp	 { $$ = $1 + $3; }
-| exp "-" exp	 { $$ = $1 - $3; }
-| exp "*" exp	 { $$ = $1 * $3; }
-| exp "/" exp	 { $$ = $1 / $3; }
-| "(" exp ")"	 { $$ = $2; }
+| IDENTIFIER	 { $$ = drv.variables[$1]; }
+| exp "+" exp	 { $$ = $1 + $3;           }
+| exp "-" exp	 { $$ = $1 - $3;           }
+| exp "*" exp	 { $$ = $1 * $3;           }
+| exp "/" exp	 { $$ = $1 / $3;           }
+| "(" exp ")"	 { $$ = $2;                }
+
 %%
 
 void

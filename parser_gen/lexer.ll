@@ -46,6 +46,7 @@ BLANK 	[ \t\r]
 
 {INT}		return make_NUMBER (yytext, loc);
 {ID}		return yy::parser::make_IDENTIFIER (yytext, loc);
+
 .			{
 				throw yy::parser::syntax_error
 				(loc, "invalid character: " + std::string(yytext));
