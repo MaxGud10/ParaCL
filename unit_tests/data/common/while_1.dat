@@ -1,0 +1,7 @@
+counter = 5;
+
+while (counter)
+{
+	print counter;
+	counter = counter - 1;
+}

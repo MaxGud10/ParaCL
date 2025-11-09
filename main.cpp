@@ -1,25 +1,25 @@
-#include "driver.hpp"
-#include "log.h"
+#include <string>     
 
-#include <iostream>
-#include <fstream>
+#include "ast.hpp"     
+#include "driver.hpp"  
+#include "log.h"      
 
 int main(int argc, char **argv)
 {
-	MSG("MACROSES:\n");
-	LOG("YYDEBUG: {}\n", YYDEBUG);
-	LOG("YY_FLEX_DEBUG: {}\n", YY_FLEX_DEBUG);
+    MSG("MACROSES:\n");
+    LOG("YYDEBUG: {}\n", YYDEBUG);
+    LOG("YY_FLEX_DEBUG: {}\n", YY_FLEX_DEBUG);
 
-    int res = 0;
+    int status = 0;
 
-	std::ofstream out("output.txt");
-
-	if (!out.is_open()) return -1;
-
-    Driver drv(out);
+    Driver drv;
 
     for (int i = 1; i < argc; ++i)
-    	res = drv.parse(argv[i]);
+        status = drv.parse(argv[i]);
 
-    return res;
+    LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
+
+    drv.ast.eval();
+
+    return status;
 }

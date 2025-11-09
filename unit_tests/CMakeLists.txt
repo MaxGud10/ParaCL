@@ -77,7 +77,24 @@ set(DEBUG_COMPILE_OPTIONS
 	-fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 )
 
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/parser)
+
+find_package(BISON REQUIRED)
+find_package(FLEX REQUIRED)
+
+set(BISON_INPUT ${CMAKE_SOURCE_DIR}/grammar/parser.y)
+set(FLEX_INPUT ${CMAKE_SOURCE_DIR}/grammar/lexer.l)
+
+BISON_TARGET(Parser ${BISON_INPUT} ${CMAKE_BINARY_DIR}/parser/parser.cpp
+    COMPILE_FLAGS "--defines=${CMAKE_BINARY_DIR}/parser/parser.hpp")
+
+FLEX_TARGET(Lexer ${FLEX_INPUT} ${CMAKE_BINARY_DIR}/parser/lexer.cpp)
+
+ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
+
 add_executable(unit_tests
+    ${FLEX_Lexer_OUTPUTS}
+    ${BISON_Parser_OUTPUTS}
 	src/unit_tests.cpp
 	main.cpp
 )
@@ -93,16 +110,23 @@ else()
 	target_compile_options(unit_tests PRIVATE ${RELEASE_COMPILE_OPTIONS})
 endif()
 
+if(ENABLE_GRAMMAR_LOG)
+	target_compile_definitions(unit_tests PRIVATE YY_FLEX_DEBUG=1 YYDEBUG=1)
+else()
+	target_compile_definitions(unit_tests PRIVATE YY_FLEX_DEBUG=0 YYDEBUG=0)
+endif()
+
 target_link_libraries(unit_tests
 	GTest::GTest
 	GTest::Main
 )
 
 target_include_directories(unit_tests PRIVATE
-	${CMAKE_SOURCE_DIR}/unit_tests/test_utils/
-	${CMAKE_SOURCE_DIR}/include
+	${CMAKE_CURRENT_SOURCE_DIR}/test_utils
+    ${CMAKE_SOURCE_DIR}/include
 	${CMAKE_SOURCE_DIR}/include/detail
-	${CMAKE_SOURCE_DIR}/utils/include
+    ${CMAKE_BINARY_DIR}/parser
+	${CMAKE_SOURCE_DIR}/utils
 )
 
 if(ENABLE_BD_TESTS)

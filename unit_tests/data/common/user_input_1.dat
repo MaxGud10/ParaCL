@@ -1,0 +1,4 @@
+var = 5;
+user_var = ?;
+
+print (user_var * var);

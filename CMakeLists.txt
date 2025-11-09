@@ -7,10 +7,14 @@ enable_testing()
 option(ENABLE_LOGGING "Enable logging" OFF)
 set(ENABLE_LOGGING ${ENABLE_LOGGING} CACHE BOOL "Enable logging" FORCE)
 
+option(ENABLE_GRAMMAR_LOG "Enable logging" OFF)
+set(ENABLE_GRAMMAR_LOG ${ENABLE_GRAMMAR_LOG} CACHE BOOL "Enable logging" FORCE)
+
 option(ENABLE_BD_TESTS "Enables big data tests" OFF)
 set(ENABLE_BD_TESTS ${ENABLE_BD_TESTS} CACHE BOOL "Enables big data tests" FORCE)
 
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Build type")
+add_subdirectory(unit_tests/)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -90,42 +94,45 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/parser)
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
-set(BISON_INPUT ${CMAKE_SOURCE_DIR}/parse_gen/parser.yy)
-set(FLEX_INPUT ${CMAKE_SOURCE_DIR}/parse_gen/lexer.ll)
+set(BISON_INPUT ${CMAKE_SOURCE_DIR}/grammar/parser.y)
+set(FLEX_INPUT ${CMAKE_SOURCE_DIR}/grammar/lexer.l)
 
 BISON_TARGET(Parser ${BISON_INPUT} ${CMAKE_BINARY_DIR}/parser/parser.cpp
-    COMPILE_FLAGS "--defines=${CMAKE_BINARY_DIR}/parser/parser.hh")
+    COMPILE_FLAGS "--defines=${CMAKE_BINARY_DIR}/parser/parser.hpp")
 
 FLEX_TARGET(Lexer ${FLEX_INPUT} ${CMAKE_BINARY_DIR}/parser/lexer.cpp)
 
 ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
 
-
-add_executable(paracl.x ./main.cpp
+add_executable(paracl main.cpp
     ${FLEX_Lexer_OUTPUTS}
     ${BISON_Parser_OUTPUTS}
 )
 
-target_include_directories(paracl.x PRIVATE
+target_include_directories(paracl PRIVATE
     ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/include/detail
     ${CMAKE_BINARY_DIR}/parser
-	${CMAKE_SOURCE_DIR}/utils/include
+	${CMAKE_SOURCE_DIR}/utils
 )
 
 if(ENABLE_LOGGING)
-    target_compile_definitions(paracl.x PRIVATE ENABLE_LOGGING)
+    target_compile_definitions(paracl PRIVATE ENABLE_LOGGING)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(paracl.x PRIVATE DEBUG)
+    target_compile_definitions(paracl PRIVATE DEBUG)
 
-	target_compile_definitions(paracl.x PRIVATE YY_FLEX_DEBUG=1 YYDEBUG=1)
-
-    target_compile_options(paracl.x PRIVATE ${DEBUG_COMPILE_OPTIONS})
-    target_link_options(paracl.x PRIVATE
+    target_compile_options(paracl PRIVATE ${DEBUG_COMPILE_OPTIONS})
+    target_link_options(paracl PRIVATE
         -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
     )
 else()
-    target_compile_options(paracl.x PRIVATE ${RELEASE_COMPILE_OPTIONS})
-	target_compile_definitions(paracl.x PRIVATE YY_FLEX_DEBUG=0 YYDEBUG=0)
+    target_compile_options(paracl PRIVATE ${RELEASE_COMPILE_OPTIONS})
+endif()
+
+if(ENABLE_GRAMMAR_LOG)
+	target_compile_definitions(paracl PRIVATE YY_FLEX_DEBUG=1 YYDEBUG=1)
+else()
+	target_compile_definitions(paracl PRIVATE YY_FLEX_DEBUG=0 YYDEBUG=0)
 endif()

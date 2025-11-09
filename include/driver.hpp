@@ -1,10 +1,11 @@
 #pragma once
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <ostream>
 
 #include "parser.hpp"
+#include "ast.hpp"
 
 extern int yy_flex_debug;
 extern int yydebug;
@@ -16,22 +17,23 @@ extern FILE* yyin;
 YY_DECL;
 
 
-class Driver
+class Driver final
 {
-public:
-	int 			result;
-	std::string 	file;
-	yy::location 	location;
-	std::ostream& 	out;
-	std::vector<std::map<std::string, int>> var_table;
-	size_t cur_scope_id = 0;
+public: /* usings */
+	using Variables = std::unordered_map<std::string, int>;
 
-	using Variables = std::map<std::string, int>;
+public: /* members */
+	std::string 	                       file;
+	yy::location 	                       location;
+	AST::AST		                       ast;
+	std::vector<std::vector<AST::StmtPtr>> stm_table;
+	size_t                                 cur_scope_id = 0;
 
 public:
-  	Driver(std::ostream& _out = std::cout) : out(_out)
+
+  	Driver(std::ostream& out = std::cout) :	ast(out)
 	{
-		var_table.push_back(Variables{});
+		stm_table.push_back(std::vector<AST::StmtPtr>());
 	}
 
 	int parse(const std::string &f)
@@ -48,13 +50,12 @@ public:
     	parse.set_debug_level(YYDEBUG);
 		#endif
 
-		int res = parse();
+		int status = parse();
 
 		scan_end();
 
-		return res;
+		return status;
 	}
-
 
 	void scan_begin()
 	{
@@ -63,7 +64,7 @@ public:
 		if (file.empty () || file == "-") yyin = stdin;
 		else if (!(yyin = fopen (file.c_str (), "r")))
 		{
-			std::cerr << "cannot open " << file << ": " << strerror (errno) << '\n';
+			std::cerr << "cannot open " << file << '\n';
 			exit (EXIT_FAILURE);
 		}
 	}
