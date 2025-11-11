@@ -29,14 +29,14 @@ TEST(ASTTest, CreateConstant)
 {
     auto constNode = CONST(42);
     ASSERT_NE(constNode, nullptr);
-    EXPECT_EQ(constNode->getVal(), 42);
+    EXPECT_EQ(constNode->get_val(), 42);
 }
 
 TEST(ASTTest, CreateVariable)
 {
     auto varNode = VAR("x");
     ASSERT_NE(varNode, nullptr);
-    EXPECT_EQ(varNode->getName(), "x");
+    EXPECT_EQ(varNode->get_name(), "x");
 }
 
 TEST(ASTTest, CreateBinaryOpADD)
@@ -341,7 +341,7 @@ TEST(ASTTest, PrintNode) {
     EXPECT_EQ(ss.str(), "42");
 }
 
-TEST(ASTTest, InNode) 
+TEST(ASTTest, InNode) // TODO
 {
     std::string simulated_input = "42";
     std::istringstream input_stream(simulated_input);

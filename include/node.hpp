@@ -73,7 +73,7 @@ public:
 		return 0;
     }
 
-    void pushChild(StmtPtr&& stmt)
+    void push_child(StmtPtr&& stmt)
     {
         children_.push_back(std::move(stmt));
     }
@@ -97,7 +97,7 @@ public:
         return val_;
     }
 
-    int getVal() const
+    int get_val() const
     {
         return val_;
     }
@@ -111,7 +111,7 @@ private:
 public:
 	VariableNode(const std::string& name): name_(name) {}
 
-    const std::string& getName() const
+    const std::string& get_name() const
     {
         return name_;
     }
@@ -259,7 +259,7 @@ public:
     {
 		MSG("Evaluating assignment\n");
 
-        std::string destName = dest_->getName();
+        std::string destName = dest_->get_name();
 
 		MSG("Getting assigned value\n");
         int value = expr_->eval(ctx);
@@ -350,7 +350,7 @@ public:
 
         std::cin >> value;
 
-        if (!std::cin.good())
+        if (std::cin.fail())
         {
             throw std::runtime_error("Incorrect input");
         }
