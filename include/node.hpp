@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include "detail/context.hpp"
 #include "detail/inode.hpp"
@@ -196,7 +196,7 @@ public:
             case BinaryOp::EQ:
                 result = leftVal == rightVal;
 				break;
- 
+
             case BinaryOp::NOT_EQ:
                 result = leftVal != rightVal;
 				break;
@@ -210,7 +210,7 @@ public:
 				break;
 
             default:
-                throw std::runtime_error("Unknown binary operation"); 
+                throw std::runtime_error("Unknown binary operation");
         }
 
 		LOG("It's {}\n", result);
@@ -335,7 +335,7 @@ public:
 
         int value = expr_->eval(ctx);
 
-        ctx.out << value;
+        ctx.out << value << std::endl;
 
         return value;
     }
