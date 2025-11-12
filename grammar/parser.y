@@ -47,6 +47,7 @@
 	SEMIC		";"
 	IF			"if"
 	WHILE		"while"
+	FOR         "for"
 	GREATER		">"
 	LESS		"<"
 	GREATER_E	">="
@@ -69,6 +70,7 @@
 %nterm <std::unique_ptr<AST::PrintNode>> 		Print
 %nterm <std::unique_ptr<AST::IfNode>> 			If_Stm
 %nterm <std::unique_ptr<AST::WhileNode>> 		While_Stm
+%nterm <std::unique_ptr<AST::ForNode>>			For_Stm
 %nterm <std::unique_ptr<AST::VariableNode>> 	Variable
 
 %nterm <std::unique_ptr<AST::StatementNode>>	Statement
@@ -155,6 +157,13 @@ Statement:	/* nothing */
 
 				$$ = std::move($1);
 			}
+		|   For_Stm
+		 	{
+				LOG("It's For_Stm. Moving from concrete rule: {}\n",
+				static_cast<const void*>($$.get()));
+				$$ = std::move($1);
+			}
+
 		 | 	Print ";"
 		 	{
 				LOG("It's Print. Moving from concrete rule: {}\n",
@@ -209,6 +218,12 @@ While_Stm:	WHILE "(" Expr ")" Statement
 			{
 				MSG("Initialising while statement\n");
 				$$ = std::make_unique<AST::WhileNode>(std::move($3), std::move($5));
+			};
+
+For_Stm:    FOR "(" Assign ";" Expr ";" Assign ")" Statement
+			{
+				MSG("Initialising for statement\n");
+				$$ = std::make_unique<AST::ForNode>(std::move($3), std::move($5), std::move($7), std::move($9));
 			};
 
 Assign: Variable "=" Expr

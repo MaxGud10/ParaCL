@@ -50,6 +50,7 @@ BLANK 	[ \t\r]
 ";"			return yy::parser::make_SEMIC       (loc);
 "if"		return yy::parser::make_IF			(loc);
 "while"		return yy::parser::make_WHILE		(loc);
+"for"       return yy::parser::make_FOR         (loc);
 ">"			return yy::parser::make_GREATER		(loc);
 "<"			return yy::parser::make_LESS		(loc);
 ">="		return yy::parser::make_GREATER_E	(loc);

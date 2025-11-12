@@ -278,6 +278,7 @@ public:
         return value;
     }
 };
+using AssignPtr   = std::unique_ptr<AssignNode>;
 
 class WhileNode final : public ConditionalStatementNode
 {
@@ -290,6 +291,8 @@ public:
 
     int eval(detail::Context& ctx) const override
     {
+        MSG(BRIGHT_GREEN UNDERLINE "got eval in while node\n" RESET);
+
         int result = 0;
 
         while (cond_->eval(ctx))
@@ -362,6 +365,31 @@ public:
 class VoidNode final : public ExpressionNode
 {
 	int eval([[maybe_unused]] detail::Context& ctx) const override { return 0; }
+};
+
+class ForNode final : public ConditionalStatementNode
+{
+private:
+    AssignPtr assgn_;
+    ExprPtr cond_;
+    AssignPtr iter_;
+    StmtPtr action_;
+public:
+    ForNode(AssignPtr&& assgn, ExprPtr&& cond, AssignPtr&& iter, StmtPtr&& action) : assgn_(std::move(assgn)), cond_(std::move(cond)),
+                                                                                   iter_(std::move(iter)),   action_(std::move(action)) {}
+    int eval(detail::Context& ctx) const override
+    {
+        MSG(BRIGHT_YELLOW "evaluating for\n" RESET);
+
+        assgn_->eval(ctx);
+        int result = 0;
+        while (cond_->eval(ctx)) {
+            result = action_->eval(ctx);
+            iter_->eval(ctx);
+        }
+        return result;
+    }
+
 };
 
 } // namespace AST
