@@ -1,0 +1,10 @@
+cond = 42;
+
+if (cond)
+{
+	print 42;
+}
+else
+{
+	print 43;
+}

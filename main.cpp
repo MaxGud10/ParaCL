@@ -18,6 +18,10 @@ int main(int argc, char **argv)
         status = drv.parse(argv[i]);
 
     LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
+    if (status == 0) 
+    {
+        drv.ast.eval();
+    }
 
     drv.ast.eval();
 
