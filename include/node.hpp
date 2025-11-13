@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include "detail/context.hpp"
 #include "detail/inode.hpp"
@@ -196,7 +196,7 @@ public:
             case BinaryOp::EQ:
                 result = leftVal == rightVal;
 				break;
- 
+
             case BinaryOp::NOT_EQ:
                 result = leftVal != rightVal;
 				break;
@@ -210,7 +210,7 @@ public:
 				break;
 
             default:
-                throw std::runtime_error("Unknown binary operation"); 
+                throw std::runtime_error("Unknown binary operation");
         }
 
 		LOG("It's {}\n", result);
@@ -304,10 +304,10 @@ public:
 class ForNode final : public ConditionalStatementNode
 {
 private:
-    std::unique_ptr<AssignNode> init_;  
-    ExprPtr                     cond_;   
-    std::unique_ptr<AssignNode> iter_;   
-    StmtPtr                     body_;  
+    std::unique_ptr<AssignNode> init_;
+    ExprPtr                     cond_;
+    std::unique_ptr<AssignNode> iter_;
+    StmtPtr                     body_;
 
 public:
     ForNode(std::unique_ptr<AssignNode>&& init, ExprPtr&& cond,
@@ -321,14 +321,14 @@ public:
     {
         int result = 0;
 
-        if (init_) 
+        if (init_)
             init_->eval(ctx);
 
         while (cond_->eval(ctx))
         {
             result = body_->eval(ctx);
 
-            if (iter_) 
+            if (iter_)
                 iter_->eval(ctx);
         }
 
@@ -345,7 +345,7 @@ private:
 
 public:
     IfNode(ExprPtr&& cond, StmtPtr&& action, StmtPtr&& else_action = nullptr)
-        : cond_       (std::move(cond       )), 
+        : cond_       (std::move(cond       )),
           action_     (std::move(action     )),
           else_action_(std::move(else_action)) {}
 
@@ -376,7 +376,7 @@ public:
 
         int value = expr_->eval(ctx);
 
-        ctx.out << value;
+        ctx.out << value << std::endl;
 
         return value;
     }
