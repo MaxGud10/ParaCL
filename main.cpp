@@ -1,8 +1,8 @@
-#include <string>     
+#include <string>
 
-#include "ast.hpp"     
-#include "driver.hpp"  
-#include "log.h"      
+#include "ast.hpp"
+#include "driver.hpp"
+#include "log.h"
 
 int main(int argc, char **argv)
 {
@@ -18,12 +18,12 @@ int main(int argc, char **argv)
         status = drv.parse(argv[i]);
 
     LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
-    if (status == 0) 
+    if (status == 0)
     {
         drv.ast.eval();
     }
 
-    drv.ast.eval();
+    // drv.ast.eval();
 
     return status;
 }

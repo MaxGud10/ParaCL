@@ -1,10 +1,11 @@
-#pragma once 
+#pragma once
 
 #if defined __has_include
 #if __has_include(<format>)
 
 #include <format>
 
+// #define ENABLE_LOGGING
 #ifdef ENABLE_LOGGING
 
 #define MSG(msg)                                                               \

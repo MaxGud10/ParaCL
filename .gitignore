@@ -2,3 +2,4 @@ build
 .venv
 Testing
 third_party
+.vscode
