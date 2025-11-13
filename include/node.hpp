@@ -16,24 +16,9 @@
 namespace AST
 {
 
-class StatementNode
-{
-public:
-	virtual void eval(detail::Context& ctx) const = 0;
+class StatementNode  : public INode {};
 
-	virtual ~StatementNode() = default;
-};
-
-class ExpressionNode : public StatementNode
-{
-public:
-	void eval(detail::Context& ctx) const override
-	{
-		eval_value(ctx);
-	}
-
-	virtual int eval_value(detail::Context& ctx) const = 0;
-};
+class ExpressionNode : public StatementNode {};
 
 class ConditionalStatementNode : public StatementNode {};
 
@@ -55,11 +40,8 @@ public:
 		}
 	}
 
-    void eval(detail::Context& ctx) const override
+    int eval(detail::Context& ctx) const override
     {
-        if (children_.empty()) 
-            return;
-
 		MSG("Evaluating scope\n");
 
         ++ctx.curScope_;
@@ -88,6 +70,7 @@ public:
 		LOG("ctx.curScope_ = {}\n", ctx.curScope_);
 		LOG("ctx.varTables_ size = {}\n", ctx.varTables_.size());
 
+		return 0;
     }
 
     void push_child(StmtPtr&& stmt)
@@ -108,7 +91,7 @@ private:
 public:
     ConstantNode(int val) : val_(val) {}
 
-    int eval_value([[maybe_unused]]detail::Context& ctx) const override
+    int eval([[maybe_unused]]detail::Context& ctx) const override
     {
 		LOG("Evaluating constant: {}\n", val_);
         return val_;
@@ -133,7 +116,7 @@ public:
         return name_;
     }
 
-    int eval_value(detail::Context& ctx) const override
+    int eval(detail::Context& ctx) const override
     {
 		LOG("Evaluating variable: {}\n", name_);
 
@@ -162,12 +145,12 @@ private:
 public:
     BinaryOpNode(ExprPtr&& left, BinaryOp op, ExprPtr&& right) : left_(std::move(left)), right_(std::move(right)), op_(op) {}
 
-    int eval_value(detail::Context& ctx) const override
+    int eval(detail::Context& ctx) const override
     {
 		MSG("Evaluating Binary Operation\n");
 
-        int leftVal  = left_->eval_value(ctx);
-        int rightVal = right_->eval_value(ctx);
+        int leftVal = left_->eval(ctx);
+        int rightVal = right_->eval(ctx);
 
 		int result = 0;
 
@@ -245,9 +228,9 @@ private:
 public:
     UnaryOpNode(ExprPtr&& operand, UnaryOp op) : operand_(std::move(operand)), op_(op) {}
 
-    int eval_value(detail::Context& ctx) const override
+    int eval(detail::Context& ctx) const override
     {
-        int operandVal = operand_->eval_value(ctx);
+        int operandVal = operand_->eval(ctx);
 
         switch (op_)
         {
@@ -263,7 +246,7 @@ public:
     }
 };
 
-class AssignNode final : public ExpressionNode
+class AssignNode final : public StatementNode
 {
 private:
     std::unique_ptr<VariableNode> dest_;
@@ -272,14 +255,14 @@ private:
 public:
     AssignNode(std::unique_ptr<VariableNode>&& dest, ExprPtr&& expr) : dest_(std::move(dest)), expr_(std::move(expr)) {}
 
-    int eval_value(detail::Context& ctx) const override
+    int eval(detail::Context& ctx) const override
     {
 		MSG("Evaluating assignment\n");
 
         std::string destName = dest_->get_name();
 
 		MSG("Getting assigned value\n");
-        int value = expr_->eval_value(ctx);
+        int value = expr_->eval(ctx);
 		LOG("Assigned value is {}\n", value);
 
         int32_t scopeId = 0;
@@ -302,87 +285,80 @@ private:
     ExprPtr cond_;
     StmtPtr scope_;
 
-public: // [x]
+public:
     WhileNode(ExprPtr&& cond, StmtPtr&& scope) : cond_(std::move(cond)), scope_(std::move(scope)) {}
 
-    void eval(detail::Context& ctx) const override
+    int eval(detail::Context& ctx) const override
     {
-        while (cond_->eval_value(ctx))
+        int result = 0;
+
+        while (cond_->eval(ctx))
         {
-            scope_->eval(ctx);
+            result = scope_->eval(ctx);
         }
+
+        return result;
     }
 };
 
-class ElseLikeNode : public StatementNode {};
-
-using ElseLikePtr = std::unique_ptr<ElseLikeNode>;
-
-class ElseIfNode final : public ElseLikeNode
+class ForNode final : public ConditionalStatementNode
 {
 private:
-    ExprPtr     cond_;
-    StmtPtr     action_;
-	ElseLikePtr alt_action_;
+    std::unique_ptr<AssignNode> init_;  
+    ExprPtr                     cond_;   
+    std::unique_ptr<AssignNode> iter_;   
+    StmtPtr                     body_;  
 
 public:
-    ElseIfNode(ExprPtr&& cond, StmtPtr&& action) : cond_(std::move(cond)), action_(std::move(action)) {}
+    ForNode(std::unique_ptr<AssignNode>&& init, ExprPtr&& cond,
+            std::unique_ptr<AssignNode>&& iter, StmtPtr&& body)
+        : init_(std::move(init)),
+          cond_(std::move(cond)),
+          iter_(std::move(iter)),
+          body_(std::move(body)) {}
 
-	ElseIfNode(ExprPtr&& cond, StmtPtr&& action, ElseLikePtr&& alt_action) : cond_(std::move(cond)), action_(std::move(action)),	alt_action_(std::move(alt_action)) {}
-
-    void eval(detail::Context& ctx) const override
+    int eval(detail::Context& ctx) const override
     {
-        if (cond_->eval_value(ctx))
-            action_->eval(ctx);
+        int result = 0;
 
-		else
-		{
-			if (alt_action_) 
-                alt_action_->eval(ctx);
-		}
-    }
-};
+        if (init_) 
+            init_->eval(ctx);
 
-class ElseNode final : public ElseLikeNode
-{
-private:
-	StmtPtr action_;
+        while (cond_->eval(ctx))
+        {
+            result = body_->eval(ctx);
 
-public:
-	ElseNode(StmtPtr&& action) : action_(std::move(action)) {}
+            if (iter_) 
+                iter_->eval(ctx);
+        }
 
-	void eval(detail::Context& ctx) const override
-    {
-        action_->eval(ctx);
+        return result;
     }
 };
 
 class IfNode final : public ConditionalStatementNode
 {
 private:
-    ExprPtr     cond_;
-    StmtPtr     action_;
-    ElseLikePtr alt_action_;
+    ExprPtr cond_;
+    StmtPtr action_;
+    StmtPtr else_action_;
 
 public:
-    IfNode(ExprPtr&& cond, StmtPtr&& action) : cond_(std::move(cond)), action_(std::move(action)) {}
+    IfNode(ExprPtr&& cond, StmtPtr&& action, StmtPtr&& else_action = nullptr)
+        : cond_       (std::move(cond       )), 
+          action_     (std::move(action     )),
+          else_action_(std::move(else_action)) {}
 
-    	IfNode(ExprPtr&& cond, StmtPtr&& action, ElseLikePtr&& alt_action) 
-        : cond_      (std::move(cond      )), 
-          action_    (std::move(action    )), 
-          alt_action_(std::move(alt_action)) {}
 
-    void eval(detail::Context& ctx) const override
+    int eval(detail::Context& ctx) const override
     {
-        if (cond_->eval_value(ctx))
-        {
-            action_->eval(ctx);
-        }
-		else
-		{
-			if (alt_action_) 
-                alt_action_->eval(ctx);
-		}
+        if (cond_->eval(ctx))
+            return action_->eval(ctx);
+
+        if (else_action_)
+            return else_action_->eval(ctx);
+
+        return 0;
     }
 };
 
@@ -394,20 +370,22 @@ private:
 public:
     PrintNode(ExprPtr&& expr) : expr_(std::move(expr)) {}
 
-    void eval(detail::Context& ctx) const override
+    int eval(detail::Context& ctx) const override
     {
 		MSG("Evaluation print\n");
 
-        int value = expr_->eval_value(ctx);
+        int value = expr_->eval(ctx);
 
         ctx.out << value;
+
+        return value;
     }
 };
 
 class InNode final : public ExpressionNode
 {
 public:
-    int eval_value([[maybe_unused]] detail::Context& ctx) const override
+    int eval([[maybe_unused]] detail::Context& ctx) const override
     {
         int value = 0;
 
@@ -422,10 +400,9 @@ public:
     }
 };
 
-// class VoidNode final : public ExpressionNode
-// {
-// 	int eval([[maybe_unused]] detail::Context& ctx) const override { return 0; }
-// };
+class VoidNode final : public ExpressionNode
+{
+	int eval([[maybe_unused]] detail::Context& ctx) const override { return 0; }
+};
 
 } // namespace AST
-

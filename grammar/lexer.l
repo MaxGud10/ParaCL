@@ -1,13 +1,13 @@
 %{ /* -*- C++ -*- */
 
-#include <cerrno>
-#include <climits>
-#include <cstdlib>
-#include <cstring>
-#include <string>
+# include <cerrno>
+# include <climits>
+# include <cstdlib>
+# include <cstring>
+# include <string>
 
-#include "driver.hpp"
-#include "parser.hpp"
+# include "driver.hpp"
+# include "parser.hpp"
 
 %}
 
@@ -36,8 +36,6 @@ BLANK 	[ \t\r]
 {BLANK}+	loc.step ();
 \n+			loc.lines (yyleng); loc.step ();
 
-"//".*		{ loc.step (); }
-
 "-"			return yy::parser::make_MINUS		(loc);
 "+"			return yy::parser::make_PLUS		(loc);
 "*"			return yy::parser::make_STAR		(loc);
@@ -51,9 +49,9 @@ BLANK 	[ \t\r]
 "}"			return yy::parser::make_RCPAREN		(loc);
 ";"			return yy::parser::make_SEMIC       (loc);
 "if"		return yy::parser::make_IF			(loc);
-"else"		return yy::parser::make_ELSE		(loc);
-"else if"	return yy::parser::make_ELSEIF		(loc);
+"else"      return yy::parser::make_ELSE        (loc);
 "while"		return yy::parser::make_WHILE		(loc);
+"for"       return yy::parser::make_FOR         (loc);
 ">"			return yy::parser::make_GREATER		(loc);
 "<"			return yy::parser::make_LESS		(loc);
 ">="		return yy::parser::make_GREATER_E	(loc);

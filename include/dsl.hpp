@@ -43,6 +43,17 @@ inline std::unique_ptr<WhileNode> while_stmt(ExprPtr condition, StmtPtr scope)
     return std::make_unique<WhileNode>(std::move(condition), std::move(scope));
 }
 
+inline std::unique_ptr<ForNode> for_stmt(std::unique_ptr<AssignNode> assignment,
+                                         ExprPtr                     condition,
+                                         std::unique_ptr<AssignNode> iter,
+                                         StmtPtr                     scope)
+{
+    return std::make_unique<ForNode>(std::move(assignment),
+                                     std::move(condition),
+                                     std::move(iter),
+                                     std::move(scope));
+}
+
 inline std::unique_ptr<PrintNode> print(ExprPtr expr) 
 {
     return std::make_unique<PrintNode>(std::move(expr));
@@ -66,7 +77,12 @@ inline std::unique_ptr<ScopeNode> scope(std::vector<StmtPtr> statements)
 #define UNARY(operand, op) AST::unary_op(std::move(operand), op)
 #define ASSIGN(var, expr) AST::assignment(std::move(var), std::move(expr))
 #define PRINT(expr) AST::print(std::move(expr))
-#define WHILE(cond, scope) AST::while_stmt(std::move(cond), std::move(body))
+#define WHILE(cond, body) AST::while_stmt(std::move(cond), std::move(body))
+#define FOR(init, cond, iter, body) AST::for_stmt(std::move(init), std::move(cond), std::move(iter), std::move(body))
 #define IF(cond, action) AST::if_stmt(std::move(cond), std::move(action))
+#define IFELSE(cond, action, else_like) AST::if_stmt(std::move(cond), std::move(action), std::move(else_like))
+#define ELSEIF(cond, action) AST::else_if_stmt(std::move(cond), std::move(action))
+#define ELSE_IFELSE(cond, action, else_like) AST::else_if_stmt(std::move(cond), std::move(action), std::move(else_like))
+#define ELSE(action) AST::else_stmt(std::move(action))
 #define IN() AST::in()
 #define BLOCK(stmts) AST::scope(std::move(stmts))

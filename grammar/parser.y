@@ -29,7 +29,6 @@
 
 	#include "log.h"
 	#include "driver.hpp"
-
 }
 
 %define api.token.prefix {TOK_}
@@ -47,9 +46,9 @@
 	RCPAREN		"}"
 	SEMIC		";"
 	IF			"if"
-	ELSE		"else"
-	ELSEIF		"else if"
+	ELSE        "else"
 	WHILE		"while"
+	FOR         "for"
 	GREATER		">"
 	LESS		"<"
 	GREATER_E	">="
@@ -70,10 +69,8 @@
 %nterm <std::unique_ptr<AST::AssignNode>> 		Assign
 %nterm <std::unique_ptr<AST::ScopeNode>> 		Scope
 %nterm <std::unique_ptr<AST::PrintNode>> 		Print
-%nterm <std::unique_ptr<AST::StatementNode>> If_Stm
-%nterm <std::unique_ptr<AST::ElseLikeNode>> 	Else_Like
-%nterm <std::unique_ptr<AST::ElseNode>> 		Else
-%nterm <std::unique_ptr<AST::ElseIfNode>> 		Else_If
+%nterm <std::unique_ptr<AST::IfNode>> 			If_Stm
+%nterm <std::unique_ptr<AST::ForNode>>          For_Stm
 %nterm <std::unique_ptr<AST::WhileNode>> 		While_Stm
 %nterm <std::unique_ptr<AST::VariableNode>> 	Variable
 
@@ -81,19 +78,20 @@
 
 %printer { yyo << $$; } <*>;
 
+%nonassoc IFX
+%nonassoc ELSE
+
 %nonassoc "if"
-%nonassoc "else"
 %nonassoc "print"
-
-
-%left "=" 
+%left "="
 %left "+" "-"
-%left "*" "/" 
+%left "*" "/"
 %nonassoc UMINUS NOT
 
 %%
 
-Program: 	Statements YYEOF
+Program: /* nothing */
+			| Statements YYEOF
 	   		{
 				MSG("Initialising global scope with vector of statements:\n");
 				for ([[maybe_unused]] const auto& stm : drv.stm_table[drv.cur_scope_id])
@@ -103,78 +101,77 @@ Program: 	Statements YYEOF
 
 				drv.ast.globalScope =
 					std::make_unique<AST::ScopeNode>(std::move(drv.stm_table[drv.cur_scope_id]));
-			}
-	   ;
+			};
 
 Statements: Statement
 			{
-				auto stm = std::move($1);
-
 				LOG("Pushing statement : {}\n",
-					static_cast<const void*>(stm.get()));
+					static_cast<const void*>($1.get()));
 
-				if (stm)
-					drv.stm_table[drv.cur_scope_id].push_back(std::move(stm));
+				drv.stm_table[drv.cur_scope_id].push_back(std::move($1));
 			}
-		  | Statements Statement
+		|	Statements Statement
 		  	{
-				auto stm = std::move($2);
-
 				LOG("Pushing statement : {}\n",
-					static_cast<const void*>(stm.get()));
+					static_cast<const void*>($2.get()));
 
-				if (stm)
-					drv.stm_table[drv.cur_scope_id].push_back(std::move(stm));
-			}
-		  ;
+				drv.stm_table[drv.cur_scope_id].push_back(std::move($2));
+			};
 
 Statement:	/* nothing */
 			{
 				MSG("Void statement\n");
-				$$ = nullptr;
+				$$ = std::make_unique<AST::VoidNode>();
 			}
-		 |	";"
-		 	{
-				MSG("Lone semicolon\n");
-				$$ = nullptr;
-			}
-		 |	Expr ";"
+		|	Expr ";"
 			{
 				LOG("It's Expr. Moving from concrete rule: {}\n",
 					static_cast<const void*>($$.get()));
 
 				$$ = std::move($1);
 			}
-		 | 	Scope
+		| 	Scope
 		 	{
 				LOG("It's Scope. Moving from concrete rule: {}\n",
 					static_cast<const void*>($$.get()));
 
 				$$ = std::move($1);
 			}
-		 | 	If_Stm
+		| 	Assign ";"
+		 	{
+				LOG("It's Assign. Moving from concrete rule: {}\n",
+					static_cast<const void*>($$.get()));
+
+				$$ = std::move($1);
+			}
+		| 	If_Stm
 		 	{
 				LOG("It's If_Stm. Moving from concrete rule: {}\n",
 					static_cast<const void*>($$.get()));
 
 				$$ = std::move($1);
 			}
-		|
-			While_Stm
+		|   While_Stm
 			{
 				LOG("It's While_Stm. Moving from concrete rule: {}\n",
 					static_cast<const void*>($$.get()));
 
 				$$ = std::move($1);
 			}
-		 | 	Print ";"
+		|   For_Stm
+            {
+                LOG("It's For_Stm. Moving from concrete rule: {}\n",
+                    static_cast<const void*>($$.get()));
+
+                $$ = std::move($1);
+            }
+		| 	Print ";"
 		 	{
 				LOG("It's Print. Moving from concrete rule: {}\n",
 					static_cast<const void*>($$.get()));
 
 				$$ = std::move($1);
-			}
-		 ;
+			};
 
 Scope: 	StartScope Statements EndScope
 		{
@@ -211,47 +208,30 @@ EndScope: 	"}"
 
 			};
 
-If_Stm: 	IF "(" Expr ")" Statement %prec "if"
+If_Stm: 	IF "(" Expr ")" Statement %prec IFX
 			{
 				MSG("Initialising if statement\n");
-				$$ = std::make_unique<AST::IfNode>(std::move($3), std::move($5), nullptr);
+				$$ = std::make_unique<AST::IfNode>(std::move($3), std::move($5));
+			}
+		|   IF "(" Expr ")" Statement ELSE Statement
+			{
+				$$ = std::make_unique<AST::IfNode>(
+					std::move($3),
+					std::move($5),
+					std::move($7)
+				);
 			};
 
-			| IF "(" Expr ")" Statement Else_Like
-			{
-				MSG("Initialising if-else statement\n");
-
-				$$ = std::make_unique<AST::ElseIfNode>(std::move($3), std::move($5), std::move($6));
-			}
-		;
-
-Else_Like:	Else
-			{
-				$$ = std::move($1);
-			}
-		|	Else_If
-			{
-				$$ = std::move($1);
-			}
-		;
-Else:		ELSE Statement
-			{
-				$$ = std::make_unique<AST::ElseNode>(std::move($2));
-				// $$ = MAKE_ELSE($2);
-			}
-
-Else_If:	ELSEIF "(" Expr ")" Statement
-			{
-				$$ = std::make_unique<AST::ElseIfNode>(std::move($3), std::move($5));
-				// $$ = MAKE_ELSEIF($3, $5);
-			}
-	  |		ELSEIF "(" Expr ")" Statement Else_Like
-	  		{
-				$$ = std::make_unique<AST::ElseIfNode>(std::move($3), std::move($5), std::move($6));
-				// $$ = MAKE_ELSE_IFELSE($3, $5, $6);
-			}
-	  ;
-
+For_Stm:    FOR "(" Assign ";" Expr ";" Assign ")" Statement
+            {
+                MSG("Initialising for statement\n");
+                $$ = std::make_unique<AST::ForNode>(
+                        std::move($3),  // init  (AssignNode)
+                        std::move($5),  // cond  (Expr)
+                        std::move($7),  // iter  (AssignNode)
+                        std::move($9)   // body  (Statement)
+                );
+            };
 
 While_Stm:	WHILE "(" Expr ")" Statement
 			{
@@ -301,15 +281,7 @@ Expr:	BinaryOp
 		{
 			MSG("Moving VarialeNode\n");
 			$$ = std::move($1);
-		}
-	| 	Assign
-		{
-			LOG("It's Assign. Moving from concrete rule: {}\n",
-				static_cast<const void*>($$.get()));
-
-			$$ = std::move($1);
-		}
-	;
+		};
 
 BinaryOp: 	Expr "+" Expr
 			{
@@ -387,23 +359,7 @@ BinaryOp: 	Expr "+" Expr
 				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
 															AST::BinaryOp::MOD,
 															std::move($3));
-			}
-		// | 	Expr "&&" Expr  
-		// 	{ 
-		// 		MSG("Initialising AND operation\n");
-		// 		$$ = std::make_unique<AST::BinaryOpNode>(   std::move($1), 
-		// 												    AST::BinaryOp::AND, 
-		// 													std::move($3)); 
-		// 	}
-		// | 	Expr "||" Expr  
-		// 	{ 
-		// 		MSG("Initialising OR operation\n");
-		// 		$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1), 
-		// 		                                            AST::BinaryOp::OR,  
-		// 													std::move($3)); 
-		// 	}
-
-		;
+			};
 
 
 UnaryOp	: 	"-" Expr %prec UMINUS
@@ -415,8 +371,7 @@ UnaryOp	: 	"-" Expr %prec UMINUS
 			{
 				MSG("Initialising NOT operation\n");
 				$$ = std::make_unique<AST::UnaryOpNode>(std::move($2), AST::UnaryOp::NOT);
-			}
-	 	;
+			};
 
 Variable: 	ID
 			{
