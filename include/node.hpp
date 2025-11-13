@@ -122,9 +122,9 @@ public:
 
         for (int32_t scopeId = ctx.curScope_; scopeId >= 0; --scopeId)
         {
-            auto it = ctx.varTables_[scopeId].find(name_);
+            auto it = ctx.varTables_[static_cast<std::size_t>(scopeId)].find(name_);
 
-            if (it != ctx.varTables_[scopeId].end())
+            if (it != ctx.varTables_[static_cast<std::size_t>(scopeId)].end())
             {
 				LOG("It's {}\n", it->second);
                 return it->second;
@@ -269,11 +269,13 @@ public:
 
         while (scopeId < ctx.curScope_)
 		{
-            if (ctx.varTables_[scopeId].contains(destName)) break;
+            if (ctx.varTables_[static_cast<std::size_t>(scopeId)].contains(destName)) 
+                break;
+
 			scopeId++;
 		}
 
-        ctx.varTables_[scopeId][destName] = value;
+        ctx.varTables_[static_cast<std::size_t>(scopeId)][destName] = value;
 
         return value;
     }

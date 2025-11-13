@@ -65,7 +65,6 @@ set(DEBUG_COMPILE_OPTIONS
 	-Wstrict-overflow=2
 	-Wsuggest-override
 	-Wswitch-default
-	-Wswitch-enum
 	-Wundef
 	-Wunreachable-code
 	-Wunused
@@ -80,12 +79,9 @@ set(DEBUG_COMPILE_OPTIONS
 	-fstack-protector
 	-fstrict-overflow
 	-fno-omit-frame-pointer
-	-Wlarger-than=8192
 	-fPIE
 	-Werror=vla
-	-Wno-pre-c++17-compat
-	-Wno-pre-c++20-compat
-	-fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
+	-fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 )
 
 
@@ -125,7 +121,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     target_compile_options(paracl PRIVATE ${DEBUG_COMPILE_OPTIONS})
     target_link_options(paracl PRIVATE
-        -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
+        -fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
     )
 else()
     target_compile_options(paracl PRIVATE ${RELEASE_COMPILE_OPTIONS})

@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>  // for Test, TestInfo (ptr only), TEST
 #include <string>         // for basic_string
 #include <vector>
+
 #include "dsl.hpp"
 #include "node.hpp"
 #include "ast.hpp"
-
 #include "test_utils.hpp"   // for run_test
 
 TEST(common, basic_1)              { test_utils::run_test("/common/basic_1"); }
@@ -35,11 +35,9 @@ TEST(common, else_if_1)            { test_utils::run_test("/common/else_if_1"); 
 
 TEST(common, else_if_2)            { test_utils::run_test("/common/else_if_2"); }
 
-TEST(common, for_if_else_complex)
-{
-    test_utils::run_test("/common/for_if_else_complex");
-}
+TEST(common, for_if_else_complex)  { test_utils::run_test("/common/for_if_else_complex"); }
 
+TEST(common, print)                {test_utils::run_test("/common/printf"); }
 
 TEST(ASTTest, CreateConstant)
 {

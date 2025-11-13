@@ -26,7 +26,13 @@
 
 
 ## Запуск проекта
+```bash
+git  clone https://github.com/MaxGud10/ParaCL
+cd ParaCL
+mkdir build
+```
 
+### `Pежим Release`
 1. Создадим виртуальную среду и установим Conan:
 
 ```bash
@@ -43,4 +49,36 @@ conan install . --output-folder=third_party --build=missing
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./third_party/conan_toolchain.cmake
 cmake --build build
 ```
+
+### `Режим Debug`
+
+1. Создадим виртуальную среду и установим Conan:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate && pip3 install conan
+```
+2. Установим зависимости проекта с помощью Conan:
+```bash
+conan install . --output-folder=third_party --build=missing -s build=Debug
+```
+3. Создаем проект 
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=./third_party/conan_toolchain.cmake
+cmake --build build
+```
+
+## Тесты
+Проект содержит unit-тесты (GoogleTest)
+
+1. Создайте тесты:
+```bash
+cmake --build build
+```
+2. Запустите тестовый двоичный файл:
+```bash
+cd build
+ctest --output-on-failure
+```
+
+
 

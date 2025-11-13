@@ -14,16 +14,26 @@ int main(int argc, char **argv)
 
     Driver drv;
 
-    for (int i = 1; i < argc; ++i)
-        status = drv.parse(argv[i]);
+    if (argc == 1) 
+        status = drv.parse("-");
+    else 
+    {
+        for (int i = 1; i < argc; ++i) 
+        {
+            status = drv.parse(argv[i]);
+            if (status != 0)
+                break;
+        }
+    }
 
     LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
-    if (status == 0)
+    if (status == 0) 
     {
+        LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
         drv.ast.eval();
     }
 
-    // drv.ast.eval();
+    drv.ast.eval();
 
     return status;
 }

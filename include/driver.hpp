@@ -70,7 +70,7 @@ public:
 	}
 
 	void scan_end ()
-	{
+	{ 
 		fclose (yyin);
 	}
 };
