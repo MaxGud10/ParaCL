@@ -7,6 +7,8 @@
 
 namespace test_utils
 {
+    
+std::string get_result(std::string_view file_name);
 
 void run_test(const std::string &test_name)
 {

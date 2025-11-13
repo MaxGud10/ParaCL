@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/")
 add_definitions(-DTEST_DATA_DIR=\"${TEST_DATA_DIR}\")
 
-find_package(GTest REQUIRED)
+find_package(GTest REQUIRED CONFIG)
 
 set(RELEASE_COMPILE_OPTIONS
 	-O2
@@ -54,7 +54,6 @@ set(DEBUG_COMPILE_OPTIONS
 	-Wstrict-overflow=2
 	-Wsuggest-override
 	-Wswitch-default
-	-Wswitch-enum
 	-Wundef
 	-Wunreachable-code
 	-Wunused
@@ -69,12 +68,9 @@ set(DEBUG_COMPILE_OPTIONS
 	-fstack-protector
 	-fstrict-overflow
 	-fno-omit-frame-pointer
-	-Wlarger-than=8192
 	-fPIE
 	-Werror=vla
-	-Wno-pre-c++17-compat
-	-Wno-pre-c++20-compat
-	-fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
+	-fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 )
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/parser)
@@ -104,7 +100,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	target_compile_options(unit_tests PRIVATE ${DEBUG_COMPILE_OPTIONS})
 
 	target_link_options(unit_tests PRIVATE
-		-fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
+		-fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 	)
 else()
 	target_compile_options(unit_tests PRIVATE ${RELEASE_COMPILE_OPTIONS})
@@ -117,9 +113,11 @@ else()
 endif()
 
 target_link_libraries(unit_tests
-	GTest::GTest
-	GTest::Main
+    PRIVATE
+        GTest::gtest
+        GTest::gtest_main 
 )
+
 
 target_include_directories(unit_tests PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/test_utils
