@@ -4,6 +4,7 @@
 #include "detail/inode.hpp"
 #include "inode.hpp"
 #include "log.h"
+#include "nodeDump.hpp"
 
 #include <cmath>
 #include <cstdint>
@@ -12,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+
 
 namespace AST
 {
@@ -79,6 +81,7 @@ public:
     }
 
 	size_t nstms() const { return children_.size(); }
+    std::vector<StmtPtr> get_children() const { return std::move(const_cast<std::vector<StmtPtr>&>(children_)); ; }
 };
 
 using ScopePtr = std::unique_ptr<ScopeNode>;
@@ -100,6 +103,16 @@ public:
     int get_val() const
     {
         return val_;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const ConstantNode& n) {
+        os << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL << n.val_ << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << CONSTANT_NODE_COLOR << std::dec
+        << END_NODE;
+
+        return os;
     }
 };
 
@@ -132,6 +145,16 @@ public:
         }
 
 		throw std::runtime_error("Undeclared variable: " + name_ + "\n");
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const VariableNode& n) {
+        os << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL << n.name_ << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << VARIABLE_NODE_COLOR << std::dec
+        << END_NODE;
+
+        return os;
     }
 };
 
@@ -217,6 +240,20 @@ public:
 
 		return result;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const BinaryOpNode& n)
+    {
+        os << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL << "binary: " << BinaryOpNames[static_cast<std::size_t>(n.op_)] << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << BINARYOP_NODE_COLOR << std::dec
+        << END_NODE;
+
+        os << SET_NODE << &n << SET_LINK << &n.left_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << &n.right_ << std::endl;
+
+        return os;
+    }
 };
 
 class UnaryOpNode final : public ExpressionNode
@@ -244,6 +281,19 @@ public:
                 throw std::runtime_error("Unknown unary operation");
         }
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const UnaryOpNode& n)
+    {
+        os << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL << "unary: " << UnaryOpNames[static_cast<std::size_t>(n.op_)] << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << UNARYOP_NODE_COLOR << std::dec
+        << END_NODE;
+
+        os << SET_NODE << &n << SET_LINK << &n.operand_ << std::endl;
+
+        return os;
+    }
 };
 
 class AssignNode final : public StatementNode
@@ -269,7 +319,7 @@ public:
 
         while (scopeId < ctx.curScope_)
 		{
-            if (ctx.varTables_[static_cast<std::size_t>(scopeId)].contains(destName)) 
+            if (ctx.varTables_[static_cast<std::size_t>(scopeId)].contains(destName))
                 break;
 
 			scopeId++;
@@ -279,6 +329,20 @@ public:
 
         return value;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const AssignNode& n)
+    {
+        os << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL << "ASSIGN '='" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << ASSIGN_NODE_COLOR << std::dec
+        << END_NODE;
+
+        os << SET_NODE << &n << SET_LINK << &n.expr_ << std::endl;
+
+        return os;
+    }
+
 };
 
 class WhileNode final : public ConditionalStatementNode
@@ -301,14 +365,31 @@ public:
 
         return result;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const WhileNode& n)
+    {
+        os << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL << "WHILE" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << WHILE_NODE_COLOR << std::dec
+        << END_NODE;
+
+        os << SET_NODE << &n << SET_LINK << &n.cond_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << &n.scope_ << std::endl;
+
+        return os;
+    }
+
 };
+
+using AssignPtr = std::unique_ptr<AssignNode>;
 
 class ForNode final : public ConditionalStatementNode
 {
 private:
-    std::unique_ptr<AssignNode> init_;
+    AssignPtr                   init_;
     ExprPtr                     cond_;
-    std::unique_ptr<AssignNode> iter_;
+    AssignPtr                   iter_;
     StmtPtr                     body_;
 
 public:
@@ -336,6 +417,22 @@ public:
 
         return result;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const ForNode& n)
+    {
+        os << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL << "FOR" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << WHILE_NODE_COLOR << std::dec
+        << END_NODE;
+
+        os << SET_NODE << &n << SET_LINK << &n.init_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << &n.cond_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << &n.iter_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << &n.body_ << std::endl;
+
+        return os;
+    }
 };
 
 class IfNode final : public ConditionalStatementNode
@@ -362,6 +459,21 @@ public:
 
         return 0;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const IfNode& n)
+    {
+        os << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL << "IF" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << IF_NODE_COLOR << std::dec
+        << END_NODE;
+
+        os << SET_NODE << &n << SET_LINK << &n.cond_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << &n.action_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << &n.else_action_ << std::endl;
+
+        return os;
+    }
 };
 
 class PrintNode final : public StatementNode
@@ -382,6 +494,19 @@ public:
 
         return value;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const PrintNode& n)
+    {
+        os << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL << "PRINT" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << PRINT_NODE_COLOR << std::dec
+        << END_NODE;
+
+        os << SET_NODE << &n << SET_LINK << &n.expr_ << std::endl;
+
+        return os;
+    }
 };
 
 class InNode final : public ExpressionNode
@@ -399,6 +524,17 @@ public:
         }
 
         return value;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const InNode& n)
+    {
+        os << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL << "IN" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << PRINT_NODE_COLOR << std::dec
+        << END_NODE;
+
+        return os;
     }
 };
 

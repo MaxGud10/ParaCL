@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include "node.hpp"
 #include "log.h"
@@ -32,6 +32,11 @@ public:
     {
 		MSG("Evaluating global scope\n");
         globalScope->eval(ctx);
+    }
+
+    void RecursiveDump()
+    {
+
     }
 };
 
