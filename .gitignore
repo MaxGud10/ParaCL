@@ -5,3 +5,5 @@ third_party
 .vscode
 .github
 dumps
+draft.cpp
+CMakeUserPresets.json
