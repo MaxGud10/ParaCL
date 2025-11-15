@@ -75,6 +75,14 @@ public:
 		return 0;
     }
 
+    void dump(std::ostream& os) const override
+    {
+        for (const auto &child : children_) {
+            // MSG("child->dump()\n");
+            child->dump(os);
+        }
+    }
+
     void push_child(StmtPtr&& stmt)
     {
         children_.push_back(std::move(stmt));
@@ -114,6 +122,12 @@ public:
 
         return os;
     }
+
+    void dump(std::ostream& os) const override {
+        os << *this;
+    }
+
+
 };
 
 class VariableNode final : public ExpressionNode
@@ -155,6 +169,11 @@ public:
         << END_NODE;
 
         return os;
+    }
+
+    void dump(std::ostream& os) const override {
+        // MSG("variable->dump()\n");
+        os << *this;
     }
 };
 
@@ -249,10 +268,18 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << BINARYOP_NODE_COLOR << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << &n.left_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << &n.right_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.left_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.right_ << std::endl;
+
+        n.left_->dump(os);
+        n.right_->dump(os);
 
         return os;
+    }
+
+    void dump(std::ostream& os) const override {
+        // MSG("binary->dump()\n");
+        os << *this;
     }
 };
 
@@ -290,9 +317,16 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << UNARYOP_NODE_COLOR << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << &n.operand_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.operand_ << std::endl;
+
+        n.operand_->dump(os);
 
         return os;
+    }
+
+    void dump(std::ostream& os) const override {
+        // MSG("unary->dump()\n");
+        os << *this;
     }
 };
 
@@ -338,9 +372,16 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << ASSIGN_NODE_COLOR << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << &n.expr_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.expr_ << std::endl;
+
+        n.expr_->dump(os);
 
         return os;
+    }
+
+    void dump(std::ostream& os) const override {
+        // MSG("assign->dump()\n");
+        os << *this;
     }
 
 };
@@ -374,10 +415,18 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << WHILE_NODE_COLOR << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << &n.cond_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << &n.scope_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.cond_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.scope_ << std::endl;
+
+        n.cond_->dump(os);
+        n.scope_->dump(os);
 
         return os;
+    }
+
+    void dump(std::ostream& os) const override {
+        // MSG("while->dump()\n");
+        os << *this;
     }
 
 };
@@ -426,12 +475,22 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << WHILE_NODE_COLOR << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << &n.init_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << &n.cond_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << &n.iter_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << &n.body_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.init_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.cond_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.iter_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.body_ << std::endl;
+
+        n.init_->dump(os);
+        n.cond_->dump(os);
+        n.iter_->dump(os);
+        n.body_->dump(os);
 
         return os;
+    }
+
+    void dump(std::ostream& os) const override {
+        // MSG("for->dump()\n");
+        os << *this;
     }
 };
 
@@ -468,11 +527,20 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << IF_NODE_COLOR << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << &n.cond_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << &n.action_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << &n.else_action_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.cond_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.action_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.else_action_ << std::endl;
+
+        n.cond_->dump(os);
+        n.action_->dump(os);
+        n.else_action_->dump(os);
 
         return os;
+    }
+
+    void dump(std::ostream& os) const override {
+        // MSG("if->dump()\n");
+        os << *this;
     }
 };
 
@@ -503,9 +571,16 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << PRINT_NODE_COLOR << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << &n.expr_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << &n.expr_ << std::endl;
+
+        n.expr_->dump(os);
 
         return os;
+    }
+
+    void dump(std::ostream& os) const override {
+        // MSG("print->dump()\n");
+        os << *this;
     }
 };
 
@@ -536,11 +611,17 @@ public:
 
         return os;
     }
+
+    void dump(std::ostream& os) const override {
+        // MSG("in->dump()\n");
+        os << *this;
+    }
 };
 
 class VoidNode final : public ExpressionNode
 {
 	int eval([[maybe_unused]] detail::Context& ctx) const override { return 0; }
+    void dump(std::ostream& os) const override {}
 };
 
 } // namespace AST

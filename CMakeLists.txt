@@ -105,6 +105,10 @@ add_executable(paracl main.cpp
     ${BISON_Parser_OUTPUTS}
 )
 
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/dumps)
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/dumps/png)
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/dumps/dot)
+
 target_include_directories(paracl PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include/detail

@@ -8,7 +8,7 @@
 
 ## FRONTEND
 
-- Лексический анализатор 
+- Лексический анализатор
 - Синтансический анализатор ( или парсер )
 - Семантический анализатор  ( или проверка типов )
 - Генерация промежуточного кода ( AST )
@@ -61,7 +61,7 @@ python3 -m venv .venv && source .venv/bin/activate && pip3 install conan
 ```bash
 conan install . --output-folder=third_party --build=missing -s build=Debug
 ```
-3. Создаем проект 
+3. Создаем проект
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=./third_party/conan_toolchain.cmake
 cmake --build build
@@ -79,6 +79,24 @@ cmake --build build
 cd build
 ctest --output-on-failure
 ```
+
+## GraphViz
+- Чтобы сгенерировать `dump` AST-дерева необходимо, чтобы в вашей `root` директории проекта находилась папка `dumps`
+- Она генерируется `cmake'ом`, но лучше перепроверить, что она у вас есть в следующем виде:
+```
+├── dumps
+│   ├── dot
+│   └── png
+```
+
+⚠️ Если хотите сгененировать dump, то вызывайте его из корня проекта. В будущем мы это пофиксим, но пока что будет работать только так.
+
+###### Инструкция по дампу
+1. `./paracl file.dat --dump`. Это флаг для дампа.
+    - он генерирует `.dot` в директории `dumps/dot`
+2. `python3 dot2png.py` - это [скрипт](./dot2png.py) для генерации `.png` картинки из `.dot` файла.
+
+
 
 
 

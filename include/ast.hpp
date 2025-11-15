@@ -34,9 +34,12 @@ public:
         globalScope->eval(ctx);
     }
 
-    void RecursiveDump()
-    {
+    void dump(std::ostream& os) {
+        os << "digraph{" << std::endl; // start of dot file
 
+        globalScope->dump(os);
+
+        os << "}"; // end of dot file
     }
 };
 

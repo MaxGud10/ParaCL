@@ -1,8 +1,24 @@
 #include <string>
+#include <chrono>
+#include <cstring>
+#include <fstream>
 
 #include "ast.hpp"
 #include "driver.hpp"
 #include "log.h"
+#include "inode.hpp"
+
+const std::string DUMP_DIR = "./dumps/";
+const std::string DOT_DIR  = "dot/";
+
+std::string generateFileName(const std::string& prefix="dot", const std::string& extension="dot") {
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d_%H-%M-%S");
+    return DUMP_DIR + DOT_DIR + prefix + "_" + ss.str() + "." + extension;
+}
 
 int main(int argc, char **argv)
 {
@@ -20,9 +36,12 @@ int main(int argc, char **argv)
     {
         for (int i = 1; i < argc; ++i)
         {
-            status = drv.parse(argv[i]);
-            if (status != 0)
-                break;
+            if (strcmp("--dump", argv[i]))
+            {
+                status = drv.parse(argv[i]);
+                if (status != 0)
+                    break;
+            }
         }
     }
 
@@ -33,7 +52,24 @@ int main(int argc, char **argv)
         drv.ast.eval();
     }
 
-    // drv.ast.eval();
+
+    // handling dump flag
+    for (int i = 0; i < argc; ++i) {
+        if (!strcmp(argv[i], "--dump")) {
+            std::string fileName = generateFileName();
+            std::cout << "generatedfileName" << fileName << std::endl;
+            std::ofstream outFile(fileName);
+            if (outFile.is_open())
+            {
+                drv.ast.dump(outFile);
+                std::cout << "dumped" << std::endl;
+                outFile.close();
+                return status;
+            }
+        }
+    }
+
+
 
     return status;
 }
