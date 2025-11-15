@@ -4,7 +4,7 @@ import os
 
 
 DOT_DIR = Path("./dumps/dot")
-PNG_DIR = Path("./dumps/png")
+PNG_DIR = Path("./dumps/png/")
 APPROPRIATE_EXTENSIONS = [".dot"]
 
 class DotError(Exception):
@@ -22,7 +22,8 @@ def get_dot(directory: Path):
     return sorted(images)
 
 def createPng(name):
-    os.system(f"dot -Tpng {name} -o {str(PNG_DIR) + str(name.name.split(".")[0])}.png")
+    print(PNG_DIR)
+    os.system(f"dot -Tpng   {name} -o {str(PNG_DIR) + "/" + str(name.name.split(".")[0])}.png")
 
 choices = get_dot(DOT_DIR)
 choices_str = [str(k) for k in choices]

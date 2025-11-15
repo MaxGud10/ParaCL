@@ -78,7 +78,6 @@ class INode
 public:
     virtual int eval(detail::Context& ctx) const = 0;
     virtual void dump(std::ostream& os) const = 0;
-
     virtual ~INode() = default;
 };
 
