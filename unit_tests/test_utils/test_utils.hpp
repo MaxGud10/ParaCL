@@ -28,7 +28,12 @@ std::string get_result(std::string_view file_name)
 
     EXPECT_EQ(status, 0);
 
-    return result.str();
+    std::string result_str;
+    std::getline(result, result_str, '\0');
+
+    result_str.erase(std::remove(result_str.begin(), result_str.end(), '\n'), result_str.end());
+
+    return result_str;
 }
 
 inline std::string get_answer(std::string_view file_name)
