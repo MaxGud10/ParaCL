@@ -1,7 +1,10 @@
 import questionary
 from pathlib import Path
+import os
+
 
 DOT_DIR = Path("./dumps/dot")
+PNG_DIR = Path("./dumps/png")
 APPROPRIATE_EXTENSIONS = [".dot"]
 
 class DotError(Exception):
@@ -19,17 +22,20 @@ def get_dot(directory: Path):
     return sorted(images)
 
 def createPng(name):
-    pass
+    os.system(f"dot -Tpng {name} -o {str(PNG_DIR) + str(name.name.split(".")[0])}.png")
 
 choices = get_dot(DOT_DIR)
 choices_str = [str(k) for k in choices]
 if not choices:
     raise DotError(f"sry, no .dot files in dumps/dot dir yet.")
 
-dot_select = questionary.select("Choose a .dot file you want to generate .png from",
-                              choices=choices_str).ask()
+dot_select = Path(questionary.select("Choose a .dot file you want to generate .png from",
+                              choices=choices_str).ask())
+
 for choice in choices:
-    if choice.name == dot_select:
+    print(f"{choice.name} vs {dot_select.name}")
+    if choice.name == dot_select.name:
+        print("names equal!")
         createPng(dot_select)
 
 
