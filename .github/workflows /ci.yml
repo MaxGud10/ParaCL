@@ -1,0 +1,55 @@
+name: Simple CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            flex \
+            bison \
+            python3-venv \
+            python3-pip
+
+      - name: Create virtual environment and install Conan
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip3 install conan
+
+      - name: Conan profile detect
+        run: |
+          source .venv/bin/activate
+          conan profile detect --force
+
+      - name: Install project dependencies via Conan
+        run: |
+          source .venv/bin/activate
+          conan install . --output-folder=third_party --build=missing
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE=./third_party/conan_toolchain.cmake
+
+      - name: Build project
+        run: |
+          cmake --build build
+
+      - name: Run tests
+        working-directory: build
+        run: |
+          ctest --output-on-failure

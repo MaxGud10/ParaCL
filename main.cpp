@@ -52,7 +52,6 @@ int main(int argc, char **argv)
         drv.ast.eval();
     }
 
-
     // handling dump flag
     for (int i = 0; i < argc; ++i) {
         if (!strcmp(argv[i], "--dump")) {
@@ -68,8 +67,6 @@ int main(int argc, char **argv)
             }
         }
     }
-
-
 
     return status;
 }
