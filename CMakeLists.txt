@@ -14,7 +14,6 @@ option(ENABLE_BD_TESTS "Enables big data tests" OFF)
 set(ENABLE_BD_TESTS ${ENABLE_BD_TESTS} CACHE BOOL "Enables big data tests" FORCE)
 
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Build type")
-add_subdirectory(unit_tests/)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -100,10 +99,49 @@ FLEX_TARGET(Lexer ${FLEX_INPUT} ${CMAKE_BINARY_DIR}/parser/lexer.cpp)
 
 ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
 
-add_executable(paracl main.cpp
+set_source_files_properties(
+    ${FLEX_Lexer_OUTPUTS}
+    ${BISON_Parser_OUTPUTS}
+    PROPERTIES GENERATED TRUE
+)
+
+add_library(paracl_core
     ${FLEX_Lexer_OUTPUTS}
     ${BISON_Parser_OUTPUTS}
 )
+
+target_include_directories(paracl_core PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/include/detail
+    ${CMAKE_BINARY_DIR}/parser
+    ${CMAKE_SOURCE_DIR}/utils
+)
+
+if(ENABLE_LOGGING)
+    target_compile_definitions(paracl_core PUBLIC ENABLE_LOGGING)
+endif()
+
+if(ENABLE_GRAMMAR_LOG)
+    target_compile_definitions(paracl_core PUBLIC YY_FLEX_DEBUG=1 YYDEBUG=1)
+else()
+    target_compile_definitions(paracl_core PUBLIC YY_FLEX_DEBUG=0 YYDEBUG=0)
+endif()
+
+add_executable(paracl main.cpp)
+
+target_link_libraries(paracl PRIVATE paracl_core)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(paracl PRIVATE DEBUG)
+    target_compile_options(paracl PRIVATE ${DEBUG_COMPILE_OPTIONS})
+    target_link_options(paracl PRIVATE
+        -fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
+    )
+else()
+    target_compile_options(paracl PRIVATE ${RELEASE_COMPILE_OPTIONS})
+endif()
+
+add_subdirectory(unit_tests/)
 
 file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/dumps)
 file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/dumps/png)

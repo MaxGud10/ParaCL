@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.14)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+find_package(GTest REQUIRED CONFIG)
+
 set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/")
 add_definitions(-DTEST_DATA_DIR=\"${TEST_DATA_DIR}\")
 
@@ -73,26 +75,25 @@ set(DEBUG_COMPILE_OPTIONS
 	-fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 )
 
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/parser)
-
-find_package(BISON REQUIRED)
-find_package(FLEX REQUIRED)
-
-set(BISON_INPUT ${CMAKE_SOURCE_DIR}/grammar/parser.y)
-set(FLEX_INPUT ${CMAKE_SOURCE_DIR}/grammar/lexer.l)
-
-BISON_TARGET(Parser ${BISON_INPUT} ${CMAKE_BINARY_DIR}/parser/parser.cpp
-    COMPILE_FLAGS "--defines=${CMAKE_BINARY_DIR}/parser/parser.hpp")
-
-FLEX_TARGET(Lexer ${FLEX_INPUT} ${CMAKE_BINARY_DIR}/parser/lexer.cpp)
-
-ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
-
 add_executable(unit_tests
-    ${FLEX_Lexer_OUTPUTS}
-    ${BISON_Parser_OUTPUTS}
-	src/unit_tests.cpp
-	main.cpp
+    src/unit_tests.cpp
+    main.cpp
+)
+
+
+target_link_libraries(unit_tests
+    PRIVATE
+        paracl_core         
+        GTest::gtest
+        GTest::gtest_main 
+)
+
+target_include_directories(unit_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_utils
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/include/detail
+    ${CMAKE_BINARY_DIR}/parser
+    ${CMAKE_SOURCE_DIR}/utils
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -112,20 +113,6 @@ else()
 	target_compile_definitions(unit_tests PRIVATE YY_FLEX_DEBUG=0 YYDEBUG=0)
 endif()
 
-target_link_libraries(unit_tests
-    PRIVATE
-        GTest::gtest
-        GTest::gtest_main 
-)
-
-
-target_include_directories(unit_tests PRIVATE
-	${CMAKE_CURRENT_SOURCE_DIR}/test_utils
-    ${CMAKE_SOURCE_DIR}/include
-	${CMAKE_SOURCE_DIR}/include/detail
-    ${CMAKE_BINARY_DIR}/parser
-	${CMAKE_SOURCE_DIR}/utils
-)
 
 if(ENABLE_BD_TESTS)
     target_compile_definitions(unit_tests PRIVATE ENABLE_BD_TESTS)
