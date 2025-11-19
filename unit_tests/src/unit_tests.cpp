@@ -37,13 +37,30 @@ TEST(common, else_if_2)            { test_utils::run_test("/common/else_if_2"); 
 
 TEST(common, for_if_else_complex)  { test_utils::run_test("/common/for_if_else_complex"); }
 
-TEST(common, print)                {test_utils::run_test("/common/printf"); }
+TEST(common, print)                { test_utils::run_test("/common/printf"); }
 
-TEST(common, and_or)               {test_utils::run_test("/common/if_and_or"); }
+TEST(common, and_or)               { test_utils::run_test("/common/if_and_or"); }
 
-TEST(common, and_or_truth_table)  { test_utils::run_test("/common/and_or_truth_table"); }
-TEST(common, and_or_precedence)   { test_utils::run_test("/common/and_or_precedence"); }
-TEST(common, and_or_relational)   { test_utils::run_test("/common/and_or_relational"); }
+TEST(common, and_or_truth_table)   { test_utils::run_test("/common/and_or_truth_table"); }
+
+TEST(common, and_or_precedence)    { test_utils::run_test("/common/and_or_precedence"); }
+
+TEST(common, and_or_relational)    { test_utils::run_test("/common/and_or_relational"); }
+
+TEST(common, bitwise_and_or)       { test_utils::run_test("/common/bitwise_and_or"); }
+
+TEST(common, bitwise_basic)        { test_utils::run_test("/common/bitwise_basic"); }
+
+TEST(common, bitwise_precedence)   { test_utils::run_test("/common/bitwise_precedence"); }
+
+TEST(common, bitwise_flags)        { test_utils::run_test("/common/bitwise_flags"); }
+
+TEST(common, bitwise_in_if)        { test_utils::run_test("/common/bitwise_in_if"); }
+
+TEST(common, bitwise_in_while)     { test_utils::run_test("/common/bitwise_in_while");}
+
+TEST(common, bitwise_and_logical)  { test_utils::run_test("/common/bitwise_and_logical");}
+
 
 
 TEST(ASTTest, CreateConstant)
@@ -521,4 +538,93 @@ TEST(ASTTest, AndOrWithRelational)
         EXPECT_EQ(expr->eval(ctx), 0);
     }
 }
+
+TEST(ASTTest, BinaryOpBIT_AND)
+{
+    auto lhs  = CONST(10); // 1010
+    auto rhs  = CONST(12); // 1100
+    auto node = binary_op(std::move(lhs), AST::BinaryOp::BIT_AND, std::move(rhs));
+
+    AST::detail::Context ctx;
+    EXPECT_EQ(node->eval(ctx), 8); // 1000
+}
+
+TEST(ASTTest, BinaryOpBIT_OR)
+{
+    auto lhs  = CONST(10); // 1010
+    auto rhs  = CONST(12); // 1100
+    auto node = binary_op(std::move(lhs), AST::BinaryOp::BIT_OR, std::move(rhs));
+
+    AST::detail::Context ctx;
+    EXPECT_EQ(node->eval(ctx), 14); // 1110
+}
+
+TEST(ASTTest, BitAndOrWithZero)
+{
+    {
+        auto node = binary_op(CONST(0), AST::BinaryOp::BIT_AND, CONST(123));
+        AST::detail::Context ctx;
+        EXPECT_EQ(node->eval(ctx), 0);
+    }
+    {
+        auto node = binary_op(CONST(0), AST::BinaryOp::BIT_OR, CONST(123));
+        AST::detail::Context ctx;
+        EXPECT_EQ(node->eval(ctx), 123);
+    }
+}
+
+TEST(ASTTest, BitAndOrCombined)
+{
+    // (10 & 12) | 3  =>  (8) | 3 = 11
+    auto andNode  = binary_op(CONST(10), AST::BinaryOp::BIT_AND, CONST(12));
+    auto fullExpr = binary_op(std::move(andNode), AST::BinaryOp::BIT_OR, CONST(3));
+
+    AST::detail::Context ctx;
+    EXPECT_EQ(fullExpr->eval(ctx), 11);
+}
+
+TEST(ASTTest, BitwiseWithRelational)
+{
+    // (10 & 12) == 8  -> 1
+    {
+        auto bit  = binary_op(CONST(10), AST::BinaryOp::BIT_AND, CONST(12));
+        auto expr = binary_op(std::move(bit), AST::BinaryOp::EQ, CONST(8));
+
+        AST::detail::Context ctx;
+        EXPECT_EQ(expr->eval(ctx), 1);
+    }
+
+    // (10 | 12) < 20 -> 1 (14 < 20)
+    {
+        auto bit  = binary_op(CONST(10), AST::BinaryOp::BIT_OR, CONST(12));
+        auto expr = binary_op(std::move(bit), AST::BinaryOp::LS, CONST(20));
+
+        AST::detail::Context ctx;
+        EXPECT_EQ(expr->eval(ctx), 1);
+    }
+}
+
+TEST(ASTTest, BitwiseWithLogical)
+{
+    // (10 & 12) && (10 | 12)  -> 8 && 14 -> 1
+    {
+        auto leftBit   = binary_op(CONST(10), AST::BinaryOp::BIT_AND, CONST(12));
+        auto rightBit  = binary_op(CONST(10), AST::BinaryOp::BIT_OR,  CONST(12));
+        auto fullExpr  = binary_op(std::move(leftBit), AST::BinaryOp::AND, std::move(rightBit));
+
+        AST::detail::Context ctx;
+        EXPECT_EQ(fullExpr->eval(ctx), 1);
+    }
+
+    // (10 & 0) || (0 | 0) -> 0 || 0 -> 0
+    {
+        auto leftBit   = binary_op(CONST(10), AST::BinaryOp::BIT_AND, CONST(0));
+        auto rightBit  = binary_op(CONST(0),  AST::BinaryOp::BIT_OR,  CONST(0));
+        auto fullExpr  = binary_op(std::move(leftBit), AST::BinaryOp::OR, std::move(rightBit));
+
+        AST::detail::Context ctx;
+        EXPECT_EQ(fullExpr->eval(ctx), 0);
+    }
+}
+
 

@@ -59,6 +59,8 @@
 	MOD			"%"
 	AND_OP      "&&"
     OR_OP       "||"
+	BIT_AND     "&"     
+    BIT_OR      "|"     
 ;
 
 %token <std::string>	ID		"identifier"
@@ -90,6 +92,8 @@
 
 %left "||"
 %left "&&"
+%left "|" 
+%left "&"
 
 %left "==" "!="
 %left "<" "<=" ">" ">="
@@ -378,6 +382,20 @@ BinaryOp: 	Expr "+" Expr
 															AST::BinaryOp::OR,
 															std::move($3));
 			}
+        |   Expr "&" Expr
+            {
+                MSG("Initialising BIT_AND operation\n");
+                $$ = std::make_unique<AST::BinaryOpNode>( std::move($1),
+                                                          AST::BinaryOp::BIT_AND,
+                                                          std::move($3));
+            }
+        |   Expr "|" Expr
+            {
+                MSG("Initialising BIT_OR operation\n");
+                $$ = std::make_unique<AST::BinaryOpNode>( std::move($1),
+                                                          AST::BinaryOp::BIT_OR,
+                                                          std::move($3));
+            }
 		|	Expr "%" Expr
 			{
 				MSG("Initialising MOD operation\n");

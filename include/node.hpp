@@ -253,6 +253,14 @@ public:
                 result = leftVal || rightVal;
 				break;
 
+            case BinaryOp::BIT_AND:
+                result = leftVal & rightVal;
+                break;
+
+            case BinaryOp::BIT_OR:
+                result = leftVal | rightVal;
+                break;
+
             default:
                 throw std::runtime_error("Unknown binary operation");
         }

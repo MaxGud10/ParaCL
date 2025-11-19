@@ -1,0 +1,7 @@
+a = 10;
+b = 12;
+
+print a & b;
+print a | b;
+print 0 & 123;
+print 0 | 123;

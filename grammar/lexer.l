@@ -62,6 +62,8 @@ BLANK 	[ \t\r]
 "%"			return yy::parser::make_MOD			(loc);
 "&&"        return yy::parser::make_AND_OP      (loc);
 "||"        return yy::parser::make_OR_OP       (loc);
+"&"         return yy::parser::make_BIT_AND     (loc);
+"|"         return yy::parser::make_BIT_OR      (loc);
 
 {INT}		return make_NUMBER         (yytext,  loc);
 {ID}		return yy::parser::make_ID (yytext,  loc);
