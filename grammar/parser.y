@@ -57,6 +57,8 @@
 	NOT_EQUAL	"!="
 	NOT			"!"
 	MOD			"%"
+	AND_OP      "&&"
+    OR_OP       "||"
 ;
 
 %token <std::string>	ID		"identifier"
@@ -83,9 +85,18 @@
 
 %nonassoc "if"
 %nonassoc "print"
+
 %left "="
+
+%left "||"
+%left "&&"
+
+%left "==" "!="
+%left "<" "<=" ">" ">="
+
 %left "+" "-"
 %left "*" "/"
+
 %nonassoc UMINUS NOT
 
 %%
@@ -351,6 +362,20 @@ BinaryOp: 	Expr "+" Expr
 				MSG("Initialising NOT_EQ operation\n");
 				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
 															AST::BinaryOp::NOT_EQ,
+															std::move($3));
+			}
+		|	Expr "&&" Expr
+			{
+				MSG("Initialising AND operation\n");
+				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
+															AST::BinaryOp::AND,
+															std::move($3));
+			}
+		|	Expr "||" Expr
+			{
+				MSG("Initialising OR operation\n");
+				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
+															AST::BinaryOp::OR,
 															std::move($3));
 			}
 		|	Expr "%" Expr

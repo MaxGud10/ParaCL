@@ -55,15 +55,38 @@ inline std::string get_answer(std::string_view file_name)
 
 }; // namespace detail
 
+// inline void run_test(const std::string &test_name)
+// {
+//     std::string test_folder = "data";
+//     std::string test_path   = std::string(TEST_DATA_DIR) + test_folder + test_name;
+
+//     std::string result = detail::get_result(test_path + ".dat");
+//     std::string answer = detail::get_answer(test_path + ".ans");
+
+//     EXPECT_EQ(result, answer);
+// }
+
 inline void run_test(const std::string &test_name)
 {
     std::string test_folder = "data";
     std::string test_path   = std::string(TEST_DATA_DIR) + test_folder + test_name;
 
-    std::string result = detail::get_result(test_path + ".dat");
-    std::string answer = detail::get_answer(test_path + ".ans");
+    try
+    {
+        std::string result = detail::get_result(test_path + ".dat");
+        std::string answer = detail::get_answer(test_path + ".ans");
 
-    EXPECT_EQ(result, answer);
+        EXPECT_EQ(result, answer);
+    }
+    catch (const std::exception& e)
+    {
+        FAIL() << "Exception in run_test(" << test_name << "): " << e.what();
+    }
+    catch (...)
+    {
+        FAIL() << "Unknown non-std exception in run_test(" << test_name << ")";
+    }
 }
+
 
 }; // namespace test_utils

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>  // for Test, TestInfo (ptr only), TEST
 #include <string>         // for basic_string
-#include <vector>
+
 
 #include "dsl.hpp"
 #include "node.hpp"
@@ -38,6 +38,13 @@ TEST(common, else_if_2)            { test_utils::run_test("/common/else_if_2"); 
 TEST(common, for_if_else_complex)  { test_utils::run_test("/common/for_if_else_complex"); }
 
 TEST(common, print)                {test_utils::run_test("/common/printf"); }
+
+TEST(common, and_or)               {test_utils::run_test("/common/if_and_or"); }
+
+TEST(common, and_or_truth_table)  { test_utils::run_test("/common/and_or_truth_table"); }
+TEST(common, and_or_precedence)   { test_utils::run_test("/common/and_or_precedence"); }
+TEST(common, and_or_relational)   { test_utils::run_test("/common/and_or_relational"); }
+
 
 TEST(ASTTest, CreateConstant)
 {
@@ -401,3 +408,117 @@ TEST(ASTTest, ForNode_SimpleCount)
 
     EXPECT_EQ(ctx.varTables_[0]["y"], 3);
 }
+
+TEST(ASTTest, BinaryOpANDTruthTable)
+{
+    {
+        auto lhs = CONST(0);
+        auto rhs = CONST(0);
+        auto node = binary_op(std::move(lhs), AST::BinaryOp::AND, std::move(rhs));
+        AST::detail::Context ctx;
+        EXPECT_EQ(node->eval(ctx), 0);
+    }
+    {
+        auto lhs = CONST(0);
+        auto rhs = CONST(1);
+        auto node = binary_op(std::move(lhs), AST::BinaryOp::AND, std::move(rhs));
+        AST::detail::Context ctx;
+        EXPECT_EQ(node->eval(ctx), 0);
+    }
+    {
+        auto lhs = CONST(1);
+        auto rhs = CONST(0);
+        auto node = binary_op(std::move(lhs), AST::BinaryOp::AND, std::move(rhs));
+        AST::detail::Context ctx;
+        EXPECT_EQ(node->eval(ctx), 0);
+    }
+    {
+        auto lhs = CONST(1);
+        auto rhs = CONST(1);
+        auto node = binary_op(std::move(lhs), AST::BinaryOp::AND, std::move(rhs));
+        AST::detail::Context ctx;
+        EXPECT_EQ(node->eval(ctx), 1);
+    }
+}
+
+TEST(ASTTest, BinaryOpORTruthTable)
+{
+    {
+        auto lhs = CONST(0);
+        auto rhs = CONST(0);
+        auto node = binary_op(std::move(lhs), AST::BinaryOp::OR, std::move(rhs));
+        AST::detail::Context ctx;
+        EXPECT_EQ(node->eval(ctx), 0);
+    }
+    {
+        auto lhs = CONST(0);
+        auto rhs = CONST(1);
+        auto node = binary_op(std::move(lhs), AST::BinaryOp::OR, std::move(rhs));
+        AST::detail::Context ctx;
+        EXPECT_EQ(node->eval(ctx), 1);
+    }
+    {
+        auto lhs = CONST(1);
+        auto rhs = CONST(0);
+        auto node = binary_op(std::move(lhs), AST::BinaryOp::OR, std::move(rhs));
+        AST::detail::Context ctx;
+        EXPECT_EQ(node->eval(ctx), 1);
+    }
+    {
+        auto lhs = CONST(1);
+        auto rhs = CONST(1);
+        auto node = binary_op(std::move(lhs), AST::BinaryOp::OR, std::move(rhs));
+        AST::detail::Context ctx;
+        EXPECT_EQ(node->eval(ctx), 1);
+    }
+}
+
+TEST(ASTTest, AndOrPrecedence)
+{
+    // 1 || (0 && 0)  ->  1
+    {
+        auto inner = binary_op(CONST(0), AST::BinaryOp::AND, CONST(0));
+        auto expr  = binary_op(CONST(1), AST::BinaryOp::OR, std::move(inner));
+        AST::detail::Context ctx;
+        EXPECT_EQ(expr->eval(ctx), 1);
+    }
+
+    // (1 || 0) && 0  ->  0
+    {
+        auto left  = binary_op(CONST(1), AST::BinaryOp::OR, CONST(0));
+        auto expr  = binary_op(std::move(left), AST::BinaryOp::AND, CONST(0));
+        AST::detail::Context ctx;
+        EXPECT_EQ(expr->eval(ctx), 0);
+    }
+}
+
+TEST(ASTTest, AndOrWithRelational)
+{
+    // (1 < 2) && (2 < 3)  -> 1 && 1 -> 1
+    {
+        auto leftCmp  = binary_op(CONST(1), AST::BinaryOp::LS, CONST(2));
+        auto rightCmp = binary_op(CONST(2), AST::BinaryOp::LS, CONST(3));
+        auto expr     = binary_op(std::move(leftCmp), AST::BinaryOp::AND, std::move(rightCmp));
+        AST::detail::Context ctx;
+        EXPECT_EQ(expr->eval(ctx), 1);
+    }
+
+    // (1 > 2) || (2 < 3)  -> 0 || 1 -> 1
+    {
+        auto leftCmp  = binary_op(CONST(1), AST::BinaryOp::GR, CONST(2));
+        auto rightCmp = binary_op(CONST(2), AST::BinaryOp::LS, CONST(3));
+        auto expr     = binary_op(std::move(leftCmp), AST::BinaryOp::OR, std::move(rightCmp));
+        AST::detail::Context ctx;
+        EXPECT_EQ(expr->eval(ctx), 1);
+    }
+
+    // (1 == 1) && (3 == 4)  -> 1 && 0 -> 0
+    {
+        auto leftCmp  = binary_op(CONST(1), AST::BinaryOp::EQ, CONST(1));
+        auto rightCmp = binary_op(CONST(3), AST::BinaryOp::EQ, CONST(4));
+        auto expr     = binary_op(std::move(leftCmp), AST::BinaryOp::AND, std::move(rightCmp));
+        AST::detail::Context ctx;
+        EXPECT_EQ(expr->eval(ctx), 0);
+    }
+}
+

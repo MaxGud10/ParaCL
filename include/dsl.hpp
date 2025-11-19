@@ -71,7 +71,7 @@ inline std::unique_ptr<ScopeNode> scope(std::vector<StmtPtr> statements)
 
 } // namespace AST
 
-#define CONST(val) AST::constant(val);
+#define CONST(val) AST::constant(val)
 #define VAR(name) AST::variable(name);
 #define BINARY(lhs, op, rhs) AST::binary_op(std::move(lhs), op, std::move(rhs))
 #define UNARY(operand, op) AST::unary_op(std::move(operand), op)
