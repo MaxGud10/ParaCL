@@ -45,16 +45,23 @@ int main(int argc, char **argv)
         }
     }
 
-    LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
-    if (status == 0)
+    if (status == 0 && drv.ast.globalScope != nullptr) 
     {
         LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
-        drv.ast.eval();
-    }
+        
+        if (drv.ast.globalScope->nstms() > 0) 
+          drv.ast.eval();
+        else 
+            std::cout << "No statements to execute" << std::endl;
+    } 
+    else 
+        std::cerr << "Parsing failed or AST not created" << std::endl;
 
     // handling dump flag
-    for (int i = 0; i < argc; ++i) {
-        if (!strcmp(argv[i], "--dump")) {
+    for (int i = 0; i < argc; ++i) 
+    {
+        if (!strcmp(argv[i], "--dump")) 
+        {
             std::string fileName = generateFileName();
             std::cout << "generatedfileName" << fileName << std::endl;
             std::ofstream outFile(fileName);
