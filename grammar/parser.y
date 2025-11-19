@@ -59,8 +59,8 @@
 	MOD			"%"
 	AND_OP      "&&"
     OR_OP       "||"
-	BIT_AND     "&"     
-    BIT_OR      "|"     
+	BIT_AND     "&"
+    BIT_OR      "|"
 ;
 
 %token <std::string>	ID		"identifier"
@@ -82,17 +82,19 @@
 
 %printer { yyo << $$; } <*>;
 
-%nonassoc IFX
-%nonassoc ELSE
+%precedence IFX
+%right ELSE
 
-%nonassoc "if"
-%nonassoc "print"
+%right "if"
+%right "print"
+%right "while"
+%right "for"
 
 %left "="
 
 %left "||"
 %left "&&"
-%left "|" 
+%left "|"
 %left "&"
 
 %left "==" "!="
@@ -101,7 +103,7 @@
 %left "+" "-"
 %left "*" "/"
 
-%nonassoc UMINUS NOT
+%right UMINUS NOT
 
 %%
 
@@ -133,11 +135,13 @@ Statements: Statement
 				drv.stm_table[drv.cur_scope_id].push_back(std::move($2));
 			};
 
-Statement:	/* nothing */
+Statement:
+			";"
 			{
 				MSG("Void statement\n");
 				$$ = std::make_unique<AST::VoidNode>();
 			}
+
 		|	Expr ";"
 			{
 				LOG("It's Expr. Moving from concrete rule: {}\n",
@@ -205,6 +209,14 @@ Scope: 	StartScope Statements EndScope
 			LOG("drv.cur_scope_id is now {}\n", drv.cur_scope_id);
 
 			drv.stm_table.pop_back();
+		}
+		| StartScope EndScope
+		{
+              MSG("Initialising empty scope\n");
+              $$ = std::make_unique<AST::ScopeNode>(std::vector<std::unique_ptr<AST::StatementNode>>());
+              --drv.cur_scope_id;
+              LOG("drv.cur_scope_id is now {}\n", drv.cur_scope_id);
+              drv.stm_table.pop_back();
 		};
 
 StartScope: "{"
