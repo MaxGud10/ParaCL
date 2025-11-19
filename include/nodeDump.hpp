@@ -10,6 +10,9 @@ const std::string SET_COLOR             = "fillcolor=\"#";
 const std::string END_NODE              = "\"];\n";
 const std::string SET_LINK              = "->";
 
+
+std::string generateFileName(const std::string& prefix, const std::string& extension);
+
 enum NodeColors {
     VARIABLE_NODE_COLOR     = 0xC2EEC7,
     BINARYOP_NODE_COLOR     = 0xF2E3C6,

@@ -117,7 +117,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL << n.val_ << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << CONSTANT_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(CONSTANT_NODE_COLOR) << std::dec
         << END_NODE;
 
         return os;
@@ -167,7 +167,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL << n.name_ << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << VARIABLE_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(VARIABLE_NODE_COLOR) << std::dec
         << END_NODE;
 
         return os;
@@ -275,7 +275,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL << "binary: " << BinaryOpNames[static_cast<std::size_t>(n.op_)] << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << BINARYOP_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(BINARYOP_NODE_COLOR) << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.left_.get() << std::endl;
@@ -324,7 +324,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL << "unary: " << UnaryOpNames[static_cast<std::size_t>(n.op_)] << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << UNARYOP_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(UNARYOP_NODE_COLOR) << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.operand_.get() << std::endl;
@@ -379,7 +379,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL << "ASSIGN '='" << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << ASSIGN_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(ASSIGN_NODE_COLOR) << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_.get() << std::endl;
@@ -422,7 +422,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL << "WHILE" << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << WHILE_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(WHILE_NODE_COLOR) << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_.get() << std::endl;
@@ -482,7 +482,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL << "FOR" << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << WHILE_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(WHILE_NODE_COLOR) << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.init_.get() << std::endl;
@@ -534,7 +534,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL << "IF" << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << IF_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(IF_NODE_COLOR) << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_.get() << std::endl;
@@ -579,7 +579,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL << "PRINT" << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << PRINT_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(PRINT_NODE_COLOR) << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_.get() << std::endl;
@@ -618,7 +618,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL << "IN" << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << PRINT_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(PRINT_NODE_COLOR) << std::dec
         << END_NODE;
 
         return os;

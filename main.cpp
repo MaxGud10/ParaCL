@@ -13,10 +13,10 @@ const std::string DOT_DIR  = "dot/";
 
 std::string generateFileName(const std::string& prefix="dot", const std::string& extension="dot") {
     auto now = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto time_now = std::chrono::system_clock::to_time_t(now);
 
     std::stringstream ss;
-    ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d_%H-%M-%S");
+    ss << std::put_time(std::localtime(&time_now), "%Y-%m-%d_%H-%M-%S");
     return DUMP_DIR + DOT_DIR + prefix + "_" + ss.str() + "." + extension;
 }
 
