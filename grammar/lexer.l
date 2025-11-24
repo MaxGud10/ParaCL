@@ -22,6 +22,8 @@ ID		[a-zA-Z][a-zA-Z_0-9]*
 INT		[0-9]+
 BLANK 	[ \t\r]
 
+%x COMMENT
+
 %{
 	#define YY_USER_ACTION	loc.columns (yyleng);
 %}
@@ -35,6 +37,26 @@ BLANK 	[ \t\r]
 
 {BLANK}+	loc.step ();
 \n+			loc.lines (yyleng); loc.step ();
+
+"//".*           {}
+
+"/*"             { BEGIN(COMMENT); }
+
+<COMMENT>"*/"    { BEGIN(INITIAL); }
+
+<COMMENT>\n      {
+                    loc.lines(1);
+                    loc.step();
+                 }
+
+<COMMENT>.       {}
+
+<COMMENT><<EOF>> {
+                    throw yy::parser::syntax_error(
+                        loc, "unterminated comment"
+                    );
+                 }
+
 
 "-"			return yy::parser::make_MINUS		(loc);
 "+"			return yy::parser::make_PLUS		(loc);

@@ -156,13 +156,13 @@ Statement:
 
 				$$ = std::move($1);
 			}
-		| 	Assign ";"
-		 	{
-				LOG("It's Assign. Moving from concrete rule: {}\n",
-					static_cast<const void*>($$.get()));
+		// | 	Assign ";"
+		//  	{
+		// 		LOG("It's Assign. Moving from concrete rule: {}\n",
+		// 			static_cast<const void*>($$.get()));
 
-				$$ = std::move($1);
-			}
+		// 		$$ = std::move($1);
+		// 	}
 		| 	If_Stm
 		 	{
 				LOG("It's If_Stm. Moving from concrete rule: {}\n",
@@ -253,10 +253,10 @@ For_Stm:    FOR "(" Assign ";" Expr ";" Assign ")" Statement
             {
                 MSG("Initialising for statement\n");
                 $$ = std::make_unique<AST::ForNode>(
-                        std::move($3),  // init  (AssignNode)
-                        std::move($5),  // cond  (Expr)
-                        std::move($7),  // iter  (AssignNode)
-                        std::move($9)   // body  (Statement)
+                        std::move($3),  
+                        std::move($5),  
+                        std::move($7),  
+                        std::move($9)   
                 );
             };
 
@@ -287,6 +287,11 @@ Expr:	BinaryOp
 	|	UnaryOp
 		{
 			MSG("Moving UnaryOp\n");
+			$$ = std::move($1);
+		}
+	|	Assign
+		{
+			MSG("Moving Assign as expression\n");
 			$$ = std::move($1);
 		}
   	| 	"(" Expr ")"

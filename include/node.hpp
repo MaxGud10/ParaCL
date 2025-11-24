@@ -340,7 +340,7 @@ public:
     }
 };
 
-class AssignNode final : public StatementNode
+class AssignNode final : public ExpressionNode
 {
 private:
     std::unique_ptr<VariableNode> dest_;
