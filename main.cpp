@@ -45,17 +45,31 @@ int main(int argc, char **argv)
         }
     }
 
-    if (status == 0 && drv.ast.globalScope != nullptr) 
+    if (status != 0) 
     {
-        LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
+        std::cerr << "Parsing failed" << std::endl;
+        return status;
+    }
+
+    if (!drv.ast.globalScope || drv.ast.globalScope->nstms() == 0) 
+    {
+        return 0;
+    }
+
+    LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
+    drv.ast.eval();
+
+    // if (status == 0 && drv.ast.globalScope != nullptr) 
+    // {
+    //     LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
         
-        if (drv.ast.globalScope->nstms() > 0) 
-          drv.ast.eval();
-        else 
-            std::cout << "No statements to execute" << std::endl;
-    } 
-    else 
-        std::cerr << "Parsing failed or AST not created" << std::endl;
+    //     if (drv.ast.globalScope->nstms() > 0) 
+    //       drv.ast.eval();
+    //     else 
+    //         std::cout << "No statements to execute" << std::endl;
+    // } 
+    // else 
+    //     std::cerr << "Parsing failed or AST not created" << std::endl;
 
     // handling dump flag
     for (int i = 0; i < argc; ++i) 
