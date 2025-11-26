@@ -61,6 +61,10 @@ TEST(common, bitwise_in_while)     { test_utils::run_test("/common/bitwise_in_wh
 
 TEST(common, bitwise_and_logical)  { test_utils::run_test("/common/bitwise_and_logical");}
 
+TEST(common, chain)                { test_utils::run_test("/common/chain");}
+
+TEST(common, different_assigns)    { test_utils::run_test("/common/different_assigns");}
+
 
 
 TEST(ASTTest, CreateConstant)
@@ -276,7 +280,7 @@ TEST(ASTTest, CreateAssignmentNode)
 {
     auto var = VAR("x");
     auto expr = CONST(42);
-    auto assignmentNode = assignment(std::move(var), std::move(expr));
+    auto assignmentNode = assignment(std::move(var), AST::AssignType::ASSIGN_DEFAULT, std::move(expr));
 
     ASSERT_NE(assignmentNode, nullptr);
 
@@ -293,7 +297,7 @@ TEST(ASTTest, WhileNode_ConditionTrue)
 {
     // Create a simple while loop: while (x < 10) { x = x + 1 }
     auto condition = AST::binary_op(AST::variable("x"), AST::BinaryOp::LS, AST::constant(10));
-    auto action = AST::assignment(AST::variable("x"), AST::binary_op(AST::variable("x"), AST::BinaryOp::ADD, AST::constant(1)));
+    auto action = AST::assignment(AST::variable("x"), AST::AssignType::ASSIGN_DEFAULT, AST::binary_op(AST::variable("x"), AST::BinaryOp::ADD, AST::constant(1)));
     auto whileNode = AST::while_stmt(std::move(condition), std::move(action));
 
     ASSERT_NE(whileNode, nullptr);
@@ -315,7 +319,7 @@ TEST(ASTTest, IfNode_TrueCondition)
 {
     // Create an if statement: if (x == 10) { y = 20 }
     auto condition = AST::binary_op(AST::variable("x"), AST::BinaryOp::EQ, AST::constant(10));
-    auto action = AST::assignment(AST::variable("y"), AST::constant(20));
+    auto action = AST::assignment(AST::variable("y"), AST::AssignType::ASSIGN_DEFAULT, AST::constant(20));
 
     auto ifNode = AST::if_stmt(std::move(condition), std::move(action));
 
@@ -339,7 +343,7 @@ TEST(ASTTest, IfNode_FalseCondition)
 {
     // Create an if statement: if (x == 10) { y = 20 }
     auto condition = AST::binary_op(AST::variable("x"), AST::BinaryOp::EQ, AST::constant(10));
-    auto action = AST::assignment(AST::variable("y"), AST::constant(20));
+    auto action = AST::assignment(AST::variable("y"), AST::AssignType::ASSIGN_DEFAULT, AST::constant(20));
     auto ifNode = AST::if_stmt(std::move(condition), std::move(action));
 
     ASSERT_NE(ifNode, nullptr);
@@ -389,7 +393,7 @@ TEST(ASTTest, InNode) // TODO
 
     auto var = VAR("x");
     auto expr = IN();
-    auto assignmentNode = assignment(std::move(var), std::move(expr));
+    auto assignmentNode = assignment(std::move(var), AST::AssignType::ASSIGN_DEFAULT, std::move(expr));
 
     ASSERT_NE(assignmentNode, nullptr);
 
@@ -406,12 +410,12 @@ TEST(ASTTest, ForNode_SimpleCount)
 {
     // for (x = 0; x < 3; x = x + 1) { y = y + 1; }
 
-    auto init = AST::assignment(AST::variable("x"), AST::constant(0));
+    auto init = AST::assignment(AST::variable("x"), AST::AssignType::ASSIGN_DEFAULT, AST::constant(0));
     auto cond = AST::binary_op(AST::variable("x"), AST::BinaryOp::LS, AST::constant(3));
-    auto iter = AST::assignment(AST::variable("x"),
+    auto iter = AST::assignment(AST::variable("x"), AST::AssignType::ASSIGN_DEFAULT,
                 AST::binary_op(AST::variable("x"), AST::BinaryOp::ADD, AST::constant(1)));
 
-    auto body = AST::assignment(AST::variable("y"),
+    auto body = AST::assignment(AST::variable("y"), AST::AssignType::ASSIGN_DEFAULT,
                 AST::binary_op(AST::variable("y"), AST::BinaryOp::ADD, AST::constant(1)));
 
     auto forNode = AST::for_stmt(std::move(init), std::move(cond), std::move(iter), std::move(body));

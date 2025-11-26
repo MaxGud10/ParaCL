@@ -61,6 +61,12 @@
     OR_OP       "||"
 	BIT_AND     "&"
     BIT_OR      "|"
+	ASSIGN_PLUS  "+="
+	ASSIGN_MINUS "-="
+	ASSIGN_MUL	 "*="
+	ASSIGN_DIV	 "/="
+	ASSIGN_MOD   "%="
+
 ;
 
 %token <std::string>	ID		"identifier"
@@ -102,6 +108,9 @@
 
 %left "+" "-"
 %left "*" "/"
+%left "+=" "-="
+%left "*=" "/="
+
 
 %right UMINUS NOT
 
@@ -253,10 +262,10 @@ For_Stm:    FOR "(" Assign ";" Expr ";" Assign ")" Statement
             {
                 MSG("Initialising for statement\n");
                 $$ = std::make_unique<AST::ForNode>(
-                        std::move($3),  
-                        std::move($5),  
-                        std::move($7),  
-                        std::move($9)   
+                        std::move($3),
+                        std::move($5),
+                        std::move($7),
+                        std::move($9)
                 );
             };
 
@@ -268,9 +277,53 @@ While_Stm:	WHILE "(" Expr ")" Statement
 
 Assign: Variable "=" Expr
 		{
-			$$ = std::make_unique<AST::AssignNode>(std::move($1), std::move($3));
+			$$ = std::make_unique<AST::AssignNode>(	std::move($1),
+													AST::AssignType::ASSIGN_DEFAULT,
+													std::move($3));
 			LOG("Initialising assignment: {}\n", static_cast<const void*>($$.get()));
-		};
+		}
+
+		|	Variable "+=" Expr
+			{
+				MSG("Intializing ASSIGN_PLUS operation\n");
+				$$ = std::make_unique<AST::AssignNode>( std::move($1),
+														  AST::AssignType::ASSIGN_PLUS,
+														  std::move($3));
+
+			}
+		|	Variable "*=" Expr
+			{
+				MSG("Intializing ASSIGN_MUL operation\n");
+				$$ = std::make_unique<AST::AssignNode>( std::move($1),
+														  AST::AssignType::ASSIGN_MUL,
+														  std::move($3));
+
+			}
+		|	Variable "-=" Expr
+			{
+				MSG("Intializing ASSIGN_MINUS operation\n");
+				$$ = std::make_unique<AST::AssignNode>( std::move($1),
+														  AST::AssignType::ASSIGN_MINUS,
+														  std::move($3));
+
+			}
+		|	Variable "/=" Expr
+			{
+				MSG("Intializing ASSIGN_DIV operation\n");
+				$$ = std::make_unique<AST::AssignNode>( std::move($1),
+														  AST::AssignType::ASSIGN_DIV,
+														  std::move($3));
+
+			}
+		|	Variable "%=" Expr
+			{
+				MSG("Intializing ASSIGN_MOD operation\n");
+				$$ = std::make_unique<AST::AssignNode>( std::move($1),
+														  AST::AssignType::ASSIGN_MOD,
+														  std::move($3));
+
+			};
+
 
 Print: 	"print" Expr
 		{

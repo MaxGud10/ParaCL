@@ -1,0 +1,12 @@
+a = 5;
+a += 7;
+print(a);
+
+a -= 8;
+print(a);
+
+a *= 5;
+print(a);
+
+a /= 5;
+print(a);

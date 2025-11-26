@@ -345,9 +345,10 @@ class AssignNode final : public ExpressionNode
 private:
     std::unique_ptr<VariableNode> dest_;
     ExprPtr                       expr_;
+    AssignType                    type_;
 
 public:
-    AssignNode(std::unique_ptr<VariableNode>&& dest, ExprPtr&& expr) : dest_(std::move(dest)), expr_(std::move(expr)) {}
+    AssignNode(std::unique_ptr<VariableNode>&& dest, AssignType type, ExprPtr&& expr) : dest_(std::move(dest)), type_(type), expr_(std::move(expr)) {}
 
     int eval(detail::Context& ctx) const override
     {
@@ -356,7 +357,31 @@ public:
         std::string destName = dest_->get_name();
 
 		MSG("Getting assigned value\n");
-        int value = expr_->eval(ctx);
+        int value = 0;
+        if (type_ != AssignType::ASSIGN_DEFAULT) {
+            auto it = ctx.varTables_[static_cast<std::size_t>(ctx.curScope_)].find(dest_->get_name());
+            if (it != ctx.varTables_[static_cast<std::size_t>(ctx.curScope_)].end()) {
+                switch (type_) {
+                    case AssignType::ASSIGN_PLUS:
+                        value = it->second + expr_->eval(ctx);
+                        break;
+                    case AssignType::ASSIGN_MINUS:
+                        value = it->second - expr_->eval(ctx);
+                        break;
+                    case AssignType::ASSIGN_MUL:
+                        value = it->second * expr_->eval(ctx);
+                        break;
+                    case AssignType::ASSIGN_DIV:
+                        value = it->second / expr_->eval(ctx);
+                        break;
+                    case AssignType::ASSIGN_MOD:
+                        value = it->second % expr_->eval(ctx);
+                        break;
+                    }
+                }
+        } else {
+            value = expr_->eval(ctx);
+        }
 		LOG("Assigned value is {}\n", value);
 
         int32_t scopeId = 0;
