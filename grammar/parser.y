@@ -74,8 +74,6 @@
 
 // ----- Statement derived -----
 %nterm <std::unique_ptr<AST::ExpressionNode>> 	Expr
-%nterm <std::unique_ptr<AST::UnaryOpNode>> 		UnaryOp
-%nterm <std::unique_ptr<AST::BinaryOpNode>> 	BinaryOp
 %nterm <std::unique_ptr<AST::AssignNode>> 		Assign
 %nterm <std::unique_ptr<AST::ScopeNode>> 		Scope
 %nterm <std::unique_ptr<AST::PrintNode>> 		Print
@@ -83,6 +81,7 @@
 %nterm <std::unique_ptr<AST::ForNode>>          For_Stm
 %nterm <std::unique_ptr<AST::WhileNode>> 		While_Stm
 %nterm <std::unique_ptr<AST::VariableNode>> 	Variable
+
 
 %nterm <std::unique_ptr<AST::StatementNode>>	Statement
 
@@ -107,7 +106,7 @@
 %left "<" "<=" ">" ">="
 
 %left "+" "-"
-%left "*" "/"
+%left "*" "/" "%"
 %left "+=" "-="
 %left "*=" "/="
 
@@ -332,159 +331,195 @@ Print: 	"print" Expr
 		}
 
 
-Expr:	BinaryOp
-		{
-			MSG("Moving BinaryOp\n");
-			$$ = std::move($1);
-		}
-	|	UnaryOp
-		{
-			MSG("Moving UnaryOp\n");
-			$$ = std::move($1);
-		}
-	|	Assign
-		{
-			MSG("Moving Assign as expression\n");
-			$$ = std::move($1);
-		}
-  	| 	"(" Expr ")"
-		{
-			MSG("Moving Expression in parenthesis\n");
-			$$ = std::move($2);
-		}
-  	| 	NUMBER
-		{
-			MSG("Initialising ConstantNode\n");
-			$$ = std::make_unique<AST::ConstantNode>($1);
-		}
-	| 	"?"
-		{
-			MSG("Initialising InNode\n");
-			$$ = std::make_unique<AST::InNode>();
-		}
-  	| 	Variable
-		{
-			MSG("Moving VarialeNode\n");
-			$$ = std::move($1);
-		};
+Expr:
+      Assign
+        {
+            MSG("Moving Assign as expression\n");
+            $$ = std::move($1);
+        }
 
-BinaryOp: 	Expr "+" Expr
-			{
-				MSG("Initialising ADD operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::ADD,
-															std::move($3));
-			}
-		| 	Expr "-" Expr
-			{
-				MSG("Initialising SUB operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::SUB,
-															std::move($3));
-			}
-		| 	Expr "*" Expr
-			{
-				MSG("Initialising MUL operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::MUL,
-															std::move($3));
-			}
-		| 	Expr "/" Expr
-			{
-				MSG("Initialising DIV operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::DIV,
-															std::move($3));
-			}
-		|	Expr ">" Expr
-			{
-				MSG("Initialising GR operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::GR,
-															std::move($3));
-			}
-		|	Expr "<" Expr
-			{
-				MSG("Initialising LS operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::LS,
-															std::move($3));
-			}
-		|	Expr ">=" Expr
-			{
-				MSG("Initialising RG_EQ operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::GR_EQ,
-															std::move($3));
-			}
-		|	Expr "<=" Expr
-			{
-				MSG("Initialising LS_EQ operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::LS_EQ,
-															std::move($3));
-			}
-		|	Expr "==" Expr
-			{
-				MSG("Initialising EQ operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::EQ,
-															std::move($3));
-			}
-		|	Expr "!=" Expr
-			{
-				MSG("Initialising NOT_EQ operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::NOT_EQ,
-															std::move($3));
-			}
-		|	Expr "&&" Expr
-			{
-				MSG("Initialising AND operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::AND,
-															std::move($3));
-			}
-		|	Expr "||" Expr
-			{
-				MSG("Initialising OR operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::OR,
-															std::move($3));
-			}
-        |   Expr "&" Expr
-            {
-                MSG("Initialising BIT_AND operation\n");
-                $$ = std::make_unique<AST::BinaryOpNode>( std::move($1),
-                                                          AST::BinaryOp::BIT_AND,
-                                                          std::move($3));
-            }
-        |   Expr "|" Expr
-            {
-                MSG("Initialising BIT_OR operation\n");
-                $$ = std::make_unique<AST::BinaryOpNode>( std::move($1),
-                                                          AST::BinaryOp::BIT_OR,
-                                                          std::move($3));
-            }
-		|	Expr "%" Expr
-			{
-				MSG("Initialising MOD operation\n");
-				$$ = std::make_unique<AST::BinaryOpNode>(	std::move($1),
-															AST::BinaryOp::MOD,
-															std::move($3));
-			};
+    | Expr "||" Expr
+        {
+            MSG("Initialising OR operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::OR,
+                std::move($3)
+            );
+        }
 
+    | Expr "&&" Expr
+        {
+            MSG("Initialising AND operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::AND,
+                std::move($3)
+            );
+        }
 
-UnaryOp	: 	"-" Expr %prec UMINUS
-			{
-				MSG("Initialising NEG operation\n");
-				$$ = std::make_unique<AST::UnaryOpNode>(std::move($2), AST::UnaryOp::NEG);
-			}
-	 	| 	"!" Expr %prec NOT
-			{
-				MSG("Initialising NOT operation\n");
-				$$ = std::make_unique<AST::UnaryOpNode>(std::move($2), AST::UnaryOp::NOT);
-			};
+    | Expr "|" Expr
+        {
+            MSG("Initialising BIT_OR operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::BIT_OR,
+                std::move($3)
+            );
+        }
+
+    | Expr "&" Expr
+        {
+            MSG("Initialising BIT_AND operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::BIT_AND,
+                std::move($3)
+            );
+        }
+
+    | Expr "==" Expr
+        {
+            MSG("Initialising EQ operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::EQ,
+                std::move($3)
+            );
+        }
+    | Expr "!=" Expr
+        {
+            MSG("Initialising NOT_EQ operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::NOT_EQ,
+                std::move($3)
+            );
+        }
+
+    | Expr "<" Expr
+        {
+            MSG("Initialising LS operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::LS,
+                std::move($3)
+            );
+        }
+    | Expr "<=" Expr
+        {
+            MSG("Initialising LS_EQ operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::LS_EQ,
+                std::move($3)
+            );
+        }
+    | Expr ">" Expr
+        {
+            MSG("Initialising GR operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::GR,
+                std::move($3)
+            );
+        }
+    | Expr ">=" Expr
+        {
+            MSG("Initialising GR_EQ operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::GR_EQ,
+                std::move($3)
+            );
+        }
+
+    | Expr "+" Expr
+        {
+            MSG("Initialising ADD operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::ADD,
+                std::move($3)
+            );
+        }
+    | Expr "-" Expr
+        {
+            MSG("Initialising SUB operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::SUB,
+                std::move($3)
+            );
+        }
+
+    | Expr "*" Expr
+        {
+            MSG("Initialising MUL operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::MUL,
+                std::move($3)
+            );
+        }
+    | Expr "/" Expr
+        {
+            MSG("Initialising DIV operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::DIV,
+                std::move($3)
+            );
+        }
+    | Expr "%" Expr
+        {
+            MSG("Initialising MOD operation\n");
+            $$ = std::make_unique<AST::BinaryOpNode>(
+                std::move($1),
+                AST::BinaryOp::MOD,
+                std::move($3)
+            );
+        }
+
+    | "-" Expr %prec UMINUS
+        {
+            MSG("Initialising NEG operation\n");
+            $$ = std::make_unique<AST::UnaryOpNode>(
+                std::move($2),
+                AST::UnaryOp::NEG
+            );
+        }
+    | "!" Expr %prec NOT
+        {
+            MSG("Initialising NOT operation\n");
+            $$ = std::make_unique<AST::UnaryOpNode>(
+                std::move($2),
+                AST::UnaryOp::NOT
+            );
+        }
+
+    | "(" Expr ")"
+        {
+            MSG("Moving Expression in parenthesis\n");
+            $$ = std::move($2);
+        }
+    | NUMBER
+        {
+            MSG("Initialising ConstantNode\n");
+            $$ = std::make_unique<AST::ConstantNode>($1);
+        }
+    | "?"
+        {
+            MSG("Initialising InNode\n");
+            $$ = std::make_unique<AST::InNode>();
+        }
+    | Variable
+        {
+            MSG("Moving VariableNode\n");
+            $$ = std::move($1);
+        }
+    ;
+
 
 Variable: 	ID
 			{

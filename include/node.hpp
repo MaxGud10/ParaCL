@@ -348,7 +348,7 @@ private:
     AssignType                    type_;
 
 public:
-    AssignNode(std::unique_ptr<VariableNode>&& dest, AssignType type, ExprPtr&& expr) : dest_(std::move(dest)), type_(type), expr_(std::move(expr)) {}
+    AssignNode(std::unique_ptr<VariableNode>&& dest, AssignType type, ExprPtr&& expr) : dest_(std::move(dest)), expr_(std::move(expr)), type_(type) {}
 
     int eval(detail::Context& ctx) const override
     {
@@ -377,11 +377,15 @@ public:
                     case AssignType::ASSIGN_MOD:
                         value = it->second % expr_->eval(ctx);
                         break;
+                    default:
+                        LOG("Blya: unexpected AssignType {} in switch\n",
+                            static_cast<int>(type_));
+                        break;
                     }
                 }
-        } else {
+        } 
+        else 
             value = expr_->eval(ctx);
-        }
 		LOG("Assigned value is {}\n", value);
 
         int32_t scopeId = 0;
