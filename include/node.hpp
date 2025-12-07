@@ -160,7 +160,7 @@ public:
             }
         }
 
-		throw std::runtime_error("Undeclared variable: " + name_ + "\n");
+		throw std::runtime_error("'" + name_ + "' was not declared in this scope");
     }
 
     friend std::ostream& operator<<(std::ostream& os, const VariableNode& n) {

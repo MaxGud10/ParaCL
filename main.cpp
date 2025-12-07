@@ -57,7 +57,16 @@ int main(int argc, char **argv)
     }
 
     LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
-    drv.ast.eval();
+
+    try
+    {
+        drv.ast.eval();
+    }
+    catch (const std::runtime_error& e)
+    {
+        std::cerr << drv.location << ": error: " << e.what() << "\n";
+        return 1;
+    }
 
     // if (status == 0 && drv.ast.globalScope != nullptr) 
     // {
