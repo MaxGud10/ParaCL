@@ -64,9 +64,26 @@ int main(int argc, char **argv)
     }
     catch (const std::runtime_error& e)
     {
-        std::cerr << drv.location << ": error: " << e.what() << "\n";
+        auto pos = drv.location.begin;
+
+        std::cerr << drv.file    << ":" << pos.line << "." << pos.column
+                  << ": error: " << e.what()        << "\n";
+
+        if (pos.line - 1 < drv.source_lines.size())
+        {
+            const std::string& src = drv.source_lines[pos.line - 1];
+
+            std::cerr << "  " << pos.line << " | " << src << "\n";
+            std::cerr << "    | ";
+            size_t caret_col = pos.column > 1 ? pos.column - 2 : 0;
+
+            std::cerr << std::string(caret_col, ' ') << "^\n";
+        }
+
         return 1;
     }
+
+
 
     // if (status == 0 && drv.ast.globalScope != nullptr) 
     // {
