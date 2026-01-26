@@ -23,9 +23,9 @@ class ExpressionNode : public StatementNode {};
 
 class ConditionalStatementNode : public StatementNode {};
 
-using ExprPtr     = std::unique_ptr<ExpressionNode>;
-using StmtPtr     = std::unique_ptr<StatementNode>;
-using CondStmtPtr = std::unique_ptr<ConditionalStatementNode>;
+using ExprPtr     = ExpressionNode*;
+using StmtPtr     = StatementNode*;
+using CondStmtPtr = ConditionalStatementNode*;
 
 class ScopeNode final : public StatementNode
 {
@@ -33,13 +33,8 @@ private:
     std::vector<StmtPtr> children_;
 
 public:
-	ScopeNode(std::vector<StmtPtr>&& stms)
-	{
-		for (auto& stm : stms)
-		{
-			children_.push_back(std::move(stm));
-		}
-	}
+    explicit ScopeNode(std::vector<StmtPtr> stms)
+        : children_(std::move(stms)) {}
 
     int eval(detail::Context& ctx) const override
     {
@@ -55,12 +50,12 @@ public:
 		MSG("Scopes children:\n");
 		for ([[maybe_unused]]const auto& child : children_)
         {
-			LOG("{}\n", static_cast<const void*>(child.get()));
+			LOG("{}\n", static_cast<const void*>(child));
         }
 
         for (const auto& child : children_)
         {
-			LOG("Evaluating {}\n", static_cast<const void*>(child.get()));
+			LOG("Evaluating {}\n", static_cast<const void*>(child));
             child->eval(ctx);
         }
 
@@ -89,10 +84,9 @@ public:
     }
 
 	size_t nstms() const { return children_.size(); }
-    std::vector<StmtPtr> get_children() const { return std::move(const_cast<std::vector<StmtPtr>&>(children_)); ; }
+    std::vector<StmtPtr> get_children() const // TODO const_cast
+    { return std::move(const_cast<std::vector<StmtPtr>&>(children_)); ; }
 };
-
-using ScopePtr = std::unique_ptr<ScopeNode>;
 
 class ConstantNode final : public ExpressionNode
 {
@@ -187,7 +181,8 @@ private:
     BinaryOp op_;
 
 public:
-    BinaryOpNode(ExprPtr&& left, BinaryOp op, ExprPtr&& right) : left_(std::move(left)), right_(std::move(right)), op_(op) {}
+    BinaryOpNode(ExpressionNode* left, BinaryOp op, ExpressionNode* right)
+        : left_(left), right_(right), op_(op) {}
 
     int eval(detail::Context& ctx) const override
     {
@@ -278,8 +273,8 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(BINARYOP_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.left_.get() << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.right_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.left_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.right_ << std::endl;
 
         n.left_->dump(os);
         n.right_->dump(os);
@@ -300,7 +295,8 @@ private:
     UnaryOp op_;
 
 public:
-    UnaryOpNode(ExprPtr&& operand, UnaryOp op) : operand_(std::move(operand)), op_(op) {}
+    UnaryOpNode(ExprPtr operand, UnaryOp op) 
+        : operand_(operand), op_(op) {} 
 
     int eval(detail::Context& ctx) const override
     {
@@ -327,7 +323,7 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(UNARYOP_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.operand_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.operand_ << std::endl;
 
         n.operand_->dump(os);
 
@@ -343,11 +339,12 @@ public:
 class AssignNode final : public StatementNode
 {
 private:
-    std::unique_ptr<VariableNode> dest_;
-    ExprPtr                       expr_;
+    VariableNode* dest_ = nullptr;
+    ExprPtr       expr_ = nullptr; 
 
 public:
-    AssignNode(std::unique_ptr<VariableNode>&& dest, ExprPtr&& expr) : dest_(std::move(dest)), expr_(std::move(expr)) {}
+    AssignNode(VariableNode* dest, ExprPtr expr)
+        : dest_(dest), expr_(expr) {}
 
     int eval(detail::Context& ctx) const override
     {
@@ -382,7 +379,7 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(ASSIGN_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_ << std::endl;
 
         n.expr_->dump(os);
 
@@ -403,7 +400,8 @@ private:
     StmtPtr scope_;
 
 public:
-    WhileNode(ExprPtr&& cond, StmtPtr&& scope) : cond_(std::move(cond)), scope_(std::move(scope)) {}
+    WhileNode(ExprPtr cond, StmtPtr scope)
+        : cond_(cond), scope_(scope) {}
 
     int eval(detail::Context& ctx) const override
     {
@@ -425,10 +423,10 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(WHILE_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_.get() << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.scope_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_  << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.scope_ << std::endl;
 
-        n.cond_->dump(os);
+        n.cond_ ->dump(os);
         n.scope_->dump(os);
 
         return os;
@@ -441,23 +439,23 @@ public:
 
 };
 
-using AssignPtr = std::unique_ptr<AssignNode>;
+using AssignPtr = AssignNode*;
 
 class ForNode final : public ConditionalStatementNode
 {
 private:
-    AssignPtr                   init_;
-    ExprPtr                     cond_;
-    AssignPtr                   iter_;
-    StmtPtr                     body_;
+    AssignPtr init_ = nullptr;
+    ExprPtr   cond_ = nullptr;
+    AssignPtr iter_ = nullptr;
+    StmtPtr   body_ = nullptr;
 
 public:
-    ForNode(std::unique_ptr<AssignNode>&& init, ExprPtr&& cond,
-            std::unique_ptr<AssignNode>&& iter, StmtPtr&& body)
-        : init_(std::move(init)),
-          cond_(std::move(cond)),
-          iter_(std::move(iter)),
-          body_(std::move(body)) {}
+    ForNode(AssignPtr init, ExprPtr cond, AssignPtr iter, StmtPtr body)
+        : init_(init),
+          cond_(cond),
+          iter_(iter),
+          body_(body) {}
+
 
     int eval(detail::Context& ctx) const override
     {
@@ -485,10 +483,10 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(WHILE_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.init_.get() << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_.get() << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.iter_.get() << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.body_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.init_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_       << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.iter_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.body_       << std::endl;
 
         n.init_->dump(os);
         n.cond_->dump(os);
@@ -512,10 +510,10 @@ private:
     StmtPtr else_action_;
 
 public:
-    IfNode(ExprPtr&& cond, StmtPtr&& action, StmtPtr&& else_action = nullptr)
-        : cond_       (std::move(cond       )),
-          action_     (std::move(action     )),
-          else_action_(std::move(else_action)) {}
+    IfNode(ExprPtr cond, StmtPtr action, StmtPtr else_action = nullptr)
+        : cond_       (cond),
+          action_     (action),
+          else_action_(else_action) {}
 
 
     int eval(detail::Context& ctx) const override
@@ -537,11 +535,11 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(IF_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_.get() << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.action_.get() << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.else_action_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_        << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.action_      << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.else_action_ << std::endl;
 
-        n.cond_->dump(os);
+        n.cond_  ->dump(os);
         n.action_->dump(os);
         if (n.else_action_) n.else_action_->dump(os);
 
@@ -561,7 +559,7 @@ private:
     ExprPtr expr_;
 
 public:
-    PrintNode(ExprPtr&& expr) : expr_(std::move(expr)) {}
+    PrintNode(ExprPtr expr) : expr_(expr) {}
 
     int eval(detail::Context& ctx) const override
     {
@@ -582,7 +580,7 @@ public:
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(PRINT_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_ << std::endl;
 
         n.expr_->dump(os);
 

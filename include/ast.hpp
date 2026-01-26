@@ -17,7 +17,7 @@ private:
     using VarTable = std::unordered_map<std::string, int>;
 
 public:
-    std::unique_ptr<ScopeNode> globalScope;
+    ScopeNode* globalScope = nullptr;
 
 private:
     std::vector<VarTable>      VarTables_;
