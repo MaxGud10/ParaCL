@@ -69,8 +69,21 @@ TEST(common, bitwise_in_if)        { test_utils::run_test("/common/bitwise_in_if
 
 TEST(common, bitwise_in_while)     { test_utils::run_test("/common/bitwise_in_while");}
 
-TEST(common, bitwise_and_logical)  { test_utils::run_test("/common/bitwise_and_logical");}
+TEST(common, bitwise_and_logical)  { test_utils::run_test("/common/bitwise_and_logical");}\
 
+TEST(common, plus_assign_basic)    { test_utils::run_test("/common/plus_assign_basic"); }
+
+TEST(common, plus_assign_expr)     { test_utils::run_test("/common/plus_assign_expr"); }
+
+TEST(common, plus_assign_in_for)   { test_utils::run_test("/common/plus_assign_in_for"); }
+
+TEST(common, minus_assign_basic)   { test_utils::run_test("/common/minus_assign_basic"); }
+
+TEST(common, star_assign_basic)    { test_utils::run_test("/common/star_assign_basic"); }
+
+TEST(common, slash_assign_basic)   { test_utils::run_test("/common/slash_assign_basic"); }
+
+TEST(common, assign_combo)         { test_utils::run_test("/common/assign_combo"); }
 
 
 TEST(ASTTestBase, CreateConstant)

@@ -34,6 +34,10 @@
 %define api.token.prefix {TOK_}
 %token
 	ASSIGN		"="
+    PLUS_ASSIGN "+="
+    MINUS_ASSIGN "-="
+    STAR_ASSIGN "*="
+    SLASH_ASSIGN "/="
 	MINUS		"-"
 	PLUS		"+"
 	STAR		"*"
@@ -271,6 +275,30 @@ Assign: Variable "=" Expr
 			$$ = drv.bld.create<AST::AssignNode>($1, $3);
 			LOG("Initialising assignment: {}\n", static_cast<const void*>($$));
 		};
+    |   Variable "+=" Expr
+        {
+            auto oldX = drv.bld.create<AST::VariableNode>($1->get_name());
+            auto val  = drv.bld.create<AST::BinaryOpNode>(oldX, AST::BinaryOp::ADD, $3);
+            $$ = drv.bld.create<AST::AssignNode>($1, val);
+        }
+    |   Variable "-=" Expr
+        {
+            auto oldX = drv.bld.create<AST::VariableNode>($1->get_name());
+            auto val  = drv.bld.create<AST::BinaryOpNode>(oldX, AST::BinaryOp::SUB, $3);
+            $$ = drv.bld.create<AST::AssignNode>($1, val);
+        }
+    |   Variable "*=" Expr
+        {
+            auto oldX = drv.bld.create<AST::VariableNode>($1->get_name());
+            auto val  = drv.bld.create<AST::BinaryOpNode>(oldX, AST::BinaryOp::MUL, $3);
+            $$ = drv.bld.create<AST::AssignNode>($1, val);
+        }
+    |   Variable "/=" Expr
+        {
+            auto oldX = drv.bld.create<AST::VariableNode>($1->get_name());
+            auto val  = drv.bld.create<AST::BinaryOpNode>(oldX, AST::BinaryOp::DIV, $3);
+            $$ = drv.bld.create<AST::AssignNode>($1, val);
+        };
 
 Print: 	"print" Expr
 		{

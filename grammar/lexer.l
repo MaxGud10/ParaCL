@@ -36,9 +36,13 @@ BLANK 	[ \t\r]
 {BLANK}+	loc.step ();
 \n+			loc.lines (yyleng); loc.step ();
 
+"-="        return yy::parser::make_MINUS_ASSIGN(loc);
 "-"			return yy::parser::make_MINUS		(loc);
+"+="        return yy::parser::make_PLUS_ASSIGN (loc);
 "+"			return yy::parser::make_PLUS		(loc);
+"*="        return yy::parser::make_STAR_ASSIGN (loc);
 "*"			return yy::parser::make_STAR		(loc);
+"/="        return yy::parser::make_SLASH_ASSIGN(loc);
 "/"			return yy::parser::make_SLASH		(loc);
 "("			return yy::parser::make_LPAREN		(loc);
 ")"			return yy::parser::make_RPAREN		(loc);
