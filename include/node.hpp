@@ -1,18 +1,18 @@
 #pragma once
 
+#include <cmath>
+#include <cstdint>
+#include <stdexcept>
+#include <vector>
+#include <iostream>
+#include <string_view>
+
 #include "detail/context.hpp"
 #include "detail/inode.hpp"
 #include "inode.hpp"
 #include "log.h"
 #include "nodeDump.hpp"
 
-#include <cmath>
-#include <cstdint>
-#include <memory>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <iostream>
 
 namespace AST
 {
@@ -94,7 +94,7 @@ private:
     const int val_;
 
 public:
-    ConstantNode(int val) : val_(val) {}
+    explicit ConstantNode(int val) : val_(val) {}
 
     int eval([[maybe_unused]]detail::Context& ctx) const override
     {
@@ -129,15 +129,12 @@ public:
 class VariableNode final : public ExpressionNode
 {
 private:
-    std::string name_;
+    std::string_view name_;
 
 public:
-	VariableNode(const std::string& name): name_(name) {}
+	explicit VariableNode(std::string_view name): name_(name) {}
 
-    const std::string& get_name() const
-    {
-        return name_;
-    }
+    std::string_view get_name() const { return name_; }
 
     int eval(detail::Context& ctx) const override
     {
@@ -154,13 +151,13 @@ public:
             }
         }
 
-		throw std::runtime_error("Undeclared variable: " + name_ + "\n");
+		throw std::runtime_error("Undeclared variable: " + std::string(name_) + "\n");
     }
 
     friend std::ostream& operator<<(std::ostream& os, const VariableNode& n) {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL << n.name_ << SET_ADR << &n << END_LABEL
+        << SET_LABEL  << n.name_   << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(VARIABLE_NODE_COLOR) << std::dec
         << END_NODE;
 
@@ -350,24 +347,24 @@ public:
     {
 		MSG("Evaluating assignment\n");
 
-        std::string destName = dest_->get_name();
+        const std::string_view destName = dest_->get_name();
 
 		MSG("Getting assigned value\n");
-        int value = expr_->eval(ctx);
+        const int value = expr_->eval(ctx);
 		LOG("Assigned value is {}\n", value);
 
-        int32_t scopeId = 0;
 
-        while (scopeId < ctx.curScope_)
-		{
-            if (ctx.varTables_[static_cast<std::size_t>(scopeId)].contains(destName))
-                break;
+        for (int32_t scopeId = ctx.curScope_; scopeId >= 0; --scopeId)
+        {
+            auto& table = ctx.varTables_[static_cast<std::size_t>(scopeId)];
+            if (table.contains(destName))
+            {
+                table[destName] = value;
+                return value;
+            }
+        }
 
-			scopeId++;
-		}
-
-        ctx.varTables_[static_cast<std::size_t>(scopeId)][destName] = value;
-
+        ctx.varTables_[static_cast<std::size_t>(ctx.curScope_)][destName] = value;
         return value;
     }
 
@@ -559,7 +556,7 @@ private:
     ExprPtr expr_;
 
 public:
-    PrintNode(ExprPtr expr) : expr_(expr) {}
+    explicit PrintNode(ExprPtr expr) : expr_(expr) {}
 
     int eval(detail::Context& ctx) const override
     {

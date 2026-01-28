@@ -28,7 +28,7 @@ inline ConstantNode* constant(int value)
 
 inline VariableNode* variable(const std::string& name)
 {
-    return dsl_builder().create<VariableNode>(name);
+    return dsl_builder().create<VariableNode>(dsl_builder().intern(name));
 }
 
 inline BinaryOpNode* binary_op(ExprPtr lhs, AST::BinaryOp op, ExprPtr rhs)

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <set>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -15,15 +16,24 @@ namespace detail
 class Context final
 {
 public:
-    using VarTable = std::unordered_map<std::string, int>;
+    using Name     = std::string_view;
+    using VarTable = std::unordered_map<Name, int>;  
 
-public:
     std::vector<VarTable> varTables_;
     int32_t               curScope_ = -1;
-	std::ostream&         out;
+    std::ostream&         out;
+
+private:
+    std::set<std::string> namePool_; 
 
 public:
-	Context(std::ostream& _out = std::cout) : out(_out) {}
+    Context(std::ostream& _out = std::cout) : out(_out) {}
+
+    Name intern(std::string_view s) 
+    {
+        auto [it, inserted] = namePool_.emplace(s);
+        return *it; 
+    }
 };
 
 } // namespace detail

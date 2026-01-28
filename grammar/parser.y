@@ -277,25 +277,25 @@ Assign: Variable "=" Expr
 		};
     |   Variable "+=" Expr
         {
-            auto oldX = drv.bld.create<AST::VariableNode>($1->get_name());
+            auto oldX = drv.bld.create<AST::VariableNode>(drv.bld.intern($1->get_name()));
             auto val  = drv.bld.create<AST::BinaryOpNode>(oldX, AST::BinaryOp::ADD, $3);
             $$ = drv.bld.create<AST::AssignNode>($1, val);
         }
     |   Variable "-=" Expr
         {
-            auto oldX = drv.bld.create<AST::VariableNode>($1->get_name());
+            auto oldX = drv.bld.create<AST::VariableNode>(drv.bld.intern($1->get_name()));
             auto val  = drv.bld.create<AST::BinaryOpNode>(oldX, AST::BinaryOp::SUB, $3);
             $$ = drv.bld.create<AST::AssignNode>($1, val);
         }
     |   Variable "*=" Expr
         {
-            auto oldX = drv.bld.create<AST::VariableNode>($1->get_name());
+            auto oldX = drv.bld.create<AST::VariableNode>(drv.bld.intern($1->get_name()));
             auto val  = drv.bld.create<AST::BinaryOpNode>(oldX, AST::BinaryOp::MUL, $3);
             $$ = drv.bld.create<AST::AssignNode>($1, val);
         }
     |   Variable "/=" Expr
         {
-            auto oldX = drv.bld.create<AST::VariableNode>($1->get_name());
+            auto oldX = drv.bld.create<AST::VariableNode>(drv.bld.intern($1->get_name()));
             auto val  = drv.bld.create<AST::BinaryOpNode>(oldX, AST::BinaryOp::DIV, $3);
             $$ = drv.bld.create<AST::AssignNode>($1, val);
         };
@@ -457,7 +457,7 @@ UnaryOp	: 	"-" Expr %prec UMINUS
 Variable: 	ID
 			{
 				MSG("Initialising VariableNode\n");
-				$$ = drv.bld.create<AST::VariableNode>($1);
+				$$ = drv.bld.create<AST::VariableNode>(drv.bld.intern($1));
 			};
 
 %%
