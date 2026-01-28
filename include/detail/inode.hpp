@@ -1,10 +1,10 @@
 #pragma once
 
-#include <memory>
-#include <cstddef>
-#include <string>
-#include <unordered_map>
 #include <array>
+#include <cstddef>
+#include <memory>
+#include <string_view>
+#include <unordered_map>
 
 #include <context.hpp>
 
@@ -13,14 +13,14 @@ namespace AST
 
 class INode;
 
-using INodePtr = std::unique_ptr<INode>;
+using INodePtr    = std::unique_ptr<INode>;
 using VarIterator = std::unordered_map<std::string, int>::iterator;
 
 template<class T>
 using ObserverPtr = T*;
 
-const size_t numBinaryOp = 15;
-enum class BinaryOp
+// inline constexpr std::size_t numBinaryOp = 15;
+enum class BinaryOp : std::uint8_t
 {
     ADD = 0,
     SUB,
@@ -37,9 +37,13 @@ enum class BinaryOp
     OR,
     BIT_AND,
     BIT_OR,
+    COUNT
 };
 
-static const std::array<std::string, numBinaryOp> BinaryOpNames = 
+inline constexpr std::size_t numBinaryOp =
+    static_cast<std::size_t>(BinaryOp::COUNT);
+
+inline constexpr  std::array<std::string_view, numBinaryOp> BinaryOpNames = 
 {{
     "ADD",
     "SUB",
@@ -58,25 +62,21 @@ static const std::array<std::string, numBinaryOp> BinaryOpNames =
     "BIT_OR"
 }};
 
-const size_t numUnaryOp = 2;
-enum class UnaryOp
+enum class UnaryOp: std::uint8_t
 {
     NEG = 0,
     NOT,
+    COUNT
 };
 
-static const std::array<std::string, numUnaryOp> UnaryOpNames = {{
+inline constexpr std::size_t numUnaryOp =
+    static_cast<std::size_t>(UnaryOp::COUNT);
+
+inline constexpr std::array<std::string_view, numUnaryOp> UnaryOpNames = 
+{{
     "NEG",
     "NOT"
 }};
-//
-// const std::string enumToStringBinary(enum BinaryOp op_) {
-//     return BinaryOpNames[static_cast<std::size_t>(op_)];
-// }
-//
-// const std::string enumToStringUnary(enum UnaryOp op_) {
-//     return UnaryOpNames[static_cast<std::size_t>(op_)];
-// }
 
 class INode
 {
