@@ -180,83 +180,74 @@ public:
 
     int eval(detail::Context& ctx) const override
     {
-		MSG("Evaluating Binary Operation\n");
+        MSG("Evaluating Binary Operation\n");
 
-        int leftVal  = left_ ->eval(ctx);
-        int rightVal = right_->eval(ctx);
-
-		int result = 0;
+        int result = 0;
 
         switch (op_)
         {
-            case BinaryOp::ADD:
-                result = leftVal + rightVal;
-				break;
-
-            case BinaryOp::SUB:
-                result = leftVal - rightVal;
-				break;
-
-            case BinaryOp::MUL:
-                result = leftVal * rightVal;
-				break;
-
-            case BinaryOp::DIV:
-                if (rightVal == 0) { throw std::runtime_error("Divide by zero"); }
-                result = leftVal / rightVal;
-				break;
-
-            case BinaryOp::MOD:
-                result = leftVal % rightVal;
-				break;
-
-            case BinaryOp::LS:
-                result = leftVal < rightVal;
-				break;
-
-            case BinaryOp::GR:
-                result = leftVal > rightVal;
-				break;
-
-            case BinaryOp::LS_EQ:
-                result = leftVal <= rightVal;
-				break;
-
-            case BinaryOp::GR_EQ:
-                result = leftVal >= rightVal;
-				break;
-
-            case BinaryOp::EQ:
-                result = leftVal == rightVal;
-				break;
-
-            case BinaryOp::NOT_EQ:
-                result = leftVal != rightVal;
-				break;
-
             case BinaryOp::AND:
-                result = leftVal && rightVal;
-				break;
+            {
+                const int leftVal = left_->eval(ctx);
+                if (!leftVal)
+                    return 0;               
+
+                const int rightVal = right_->eval(ctx);
+                return rightVal ? 1 : 0;
+            }
 
             case BinaryOp::OR:
-                result = leftVal || rightVal;
-				break;
+            {
+                const int leftVal = left_->eval(ctx);
+                if (leftVal)
+                    return 1;              
 
-            case BinaryOp::BIT_AND:
-                result = leftVal & rightVal;
-                break;
+                const int rightVal = right_->eval(ctx);
+                return rightVal ? 1 : 0;
+            }
 
-            case BinaryOp::BIT_OR:
-                result = leftVal | rightVal;
+            case BinaryOp::DIV:
+            {
+                const int leftVal  = left_ ->eval(ctx);
+                const int rightVal = right_->eval(ctx);
+
+                if (rightVal == 0) 
+                    throw std::runtime_error("Divide by zero");
+
+                result = leftVal / rightVal;
                 break;
+            }
 
             default:
-                throw std::runtime_error("Unknown binary operation");
+            {
+                const int leftVal  = left_ ->eval(ctx);
+                const int rightVal = right_->eval(ctx);
+
+                switch (op_)
+                {
+                    case BinaryOp::ADD:    result = leftVal + rightVal; break;
+                    case BinaryOp::SUB:    result = leftVal - rightVal; break;
+                    case BinaryOp::MUL:    result = leftVal * rightVal; break;
+                    case BinaryOp::MOD:    result = leftVal % rightVal; break;
+
+                    case BinaryOp::LS:     result = leftVal <  rightVal; break;
+                    case BinaryOp::GR:     result = leftVal >  rightVal; break;
+                    case BinaryOp::LS_EQ:  result = leftVal <= rightVal; break;
+                    case BinaryOp::GR_EQ:  result = leftVal >= rightVal; break;
+                    case BinaryOp::EQ:     result = leftVal == rightVal; break;
+                    case BinaryOp::NOT_EQ: result = leftVal != rightVal; break;
+
+                    case BinaryOp::BIT_AND: result = leftVal & rightVal; break;
+                    case BinaryOp::BIT_OR:  result = leftVal | rightVal; break;
+
+                    default:
+                        throw std::runtime_error("Unknown binary operation");
+                }
+            }
         }
 
-		LOG("It's {}\n", result);
-
-		return result;
+        LOG("It's {}\n", result);
+        return result;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const BinaryOpNode& n)
