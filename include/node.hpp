@@ -6,6 +6,8 @@
 #include <vector>
 #include <iostream>
 #include <string_view>
+#include <ranges>
+#include <algorithm>
 
 #include "detail/context.hpp"
 #include "detail/inode.hpp"
@@ -84,8 +86,8 @@ public:
     }
 
 	size_t nstms() const { return children_.size(); }
-    std::vector<StmtPtr> get_children() const // TODO const_cast
-    { return std::move(const_cast<std::vector<StmtPtr>&>(children_)); ; }
+
+    const std::vector<StmtPtr> &get_children() const { return children_; }
 };
 
 class ConstantNode final : public ExpressionNode
@@ -96,7 +98,7 @@ private:
 public:
     explicit ConstantNode(int val) : val_(val) {}
 
-    int eval([[maybe_unused]]detail::Context& ctx) const override
+    int eval(detail::Context&) const override
     {
 		LOG("Evaluating constant: {}\n", val_);
         return val_;
@@ -110,7 +112,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const ConstantNode& n) {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL << n.val_ << SET_ADR << &n << END_LABEL
+        << SET_LABEL  << n.val_    << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(CONSTANT_NODE_COLOR) << std::dec
         << END_NODE;
 
@@ -140,16 +142,11 @@ public:
     {
 		LOG("Evaluating variable: {}\n", name_);
 
-        for (int32_t scopeId = ctx.curScope_; scopeId >= 0; --scopeId)
-        {
-            auto it = ctx.varTables_[static_cast<std::size_t>(scopeId)].find(name_);
+        auto tableIt = std::find_if(ctx.varTables_.rbegin(), ctx.varTables_.rend(),
+            [&](const auto& table) { return table.contains(name_); });
 
-            if (it != ctx.varTables_[static_cast<std::size_t>(scopeId)].end())
-            {
-				LOG("It's {}\n", it->second);
-                return it->second;
-            }
-        }
+        if (tableIt != ctx.varTables_.rend())
+            return tableIt->find(name_)->second;
 
 		throw std::runtime_error("Undeclared variable: " + std::string(name_) + "\n");
     }
@@ -185,7 +182,7 @@ public:
     {
 		MSG("Evaluating Binary Operation\n");
 
-        int leftVal = left_->eval(ctx);
+        int leftVal  = left_ ->eval(ctx);
         int rightVal = right_->eval(ctx);
 
 		int result = 0;
@@ -266,14 +263,14 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL << "binary: " << BinaryOpNames[static_cast<std::size_t>(n.op_)] << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(BINARYOP_NODE_COLOR) << std::dec
+        << SET_LABEL  << "binary: " << BinaryOpNames[static_cast<std::size_t>(n.op_)]    << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR  << std::hex << static_cast<int>(BINARYOP_NODE_COLOR) << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.left_ << std::endl;
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.right_ << std::endl;
 
-        n.left_->dump(os);
+        n.left_ ->dump(os);
         n.right_->dump(os);
 
         return os;
@@ -316,7 +313,7 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL << "unary: " << UnaryOpNames[static_cast<std::size_t>(n.op_)] << SET_ADR << &n << END_LABEL
+        << SET_LABEL  << "unary: " << UnaryOpNames[static_cast<std::size_t>(n.op_)]    << SET_ADR << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(UNARYOP_NODE_COLOR) << std::dec
         << END_NODE;
 
@@ -357,9 +354,9 @@ public:
         for (int32_t scopeId = ctx.curScope_; scopeId >= 0; --scopeId)
         {
             auto& table = ctx.varTables_[static_cast<std::size_t>(scopeId)];
-            if (table.contains(destName))
+            if (auto it = table.find(destName); it != table.end())
             {
-                table[destName] = value;
+                it->second = value;
                 return value;
             }
         }
@@ -372,8 +369,8 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL << "ASSIGN '='" << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(ASSIGN_NODE_COLOR) << std::dec
+        << SET_LABEL  << "ASSIGN '='" << SET_ADR  << &n << END_LABEL
+        << SET_FILLED << SET_COLOR    << std::hex << static_cast<int>(ASSIGN_NODE_COLOR) << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_ << std::endl;
@@ -416,7 +413,7 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL << "WHILE" << SET_ADR << &n << END_LABEL
+        << SET_LABEL  << "WHILE"  << SET_ADR   << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(WHILE_NODE_COLOR) << std::dec
         << END_NODE;
 
@@ -476,7 +473,7 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL << "FOR" << SET_ADR << &n << END_LABEL
+        << SET_LABEL  << "FOR"     << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(WHILE_NODE_COLOR) << std::dec
         << END_NODE;
 
@@ -528,7 +525,7 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL << "IF" << SET_ADR << &n << END_LABEL
+        << SET_LABEL  << "IF"      << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(IF_NODE_COLOR) << std::dec
         << END_NODE;
 
@@ -573,7 +570,7 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL << "PRINT" << SET_ADR << &n << END_LABEL
+        << SET_LABEL  << "PRINT"   << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(PRINT_NODE_COLOR) << std::dec
         << END_NODE;
 
@@ -594,7 +591,7 @@ public:
 class InNode final : public ExpressionNode
 {
 public:
-    int eval([[maybe_unused]] detail::Context& ctx) const override
+    int eval(detail::Context&) const override
     {
         int value = 0;
 
@@ -612,7 +609,7 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL << "IN" << SET_ADR << &n << END_LABEL
+        << SET_LABEL  << "IN"      << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(PRINT_NODE_COLOR) << std::dec
         << END_NODE;
 
@@ -627,8 +624,8 @@ public:
 
 class VoidNode final : public ExpressionNode
 {
-	int eval([[maybe_unused]] detail::Context& ctx) const override { return 0; }
-    void dump(std::ostream& os) const override {}
+	int  eval(detail::Context&) const override { return 0; }
+    void dump(std::ostream&)    const override {}
 };
 
 } // namespace AST

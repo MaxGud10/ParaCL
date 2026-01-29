@@ -27,7 +27,7 @@ public: /* members */
 	std::string 	                       file;
 	yy::location 	                       location;
 	AST::AST		                       ast;
-	AST::NodeBuilder                      bld;
+	AST::NodeBuilder                       bld;
 	std::vector<std::vector<AST::StmtPtr>> stm_table;
 	size_t                                 cur_scope_id = 0;
 
