@@ -8,16 +8,29 @@
 #include "log.h"
 #include "inode.hpp"
 
-const std::string DUMP_DIR = "./dumps/";
-const std::string DOT_DIR  = "dot/";
+constexpr std::string_view DUMP_DIR = "./dumps/";
+constexpr std::string_view DOT_DIR  = "dot/";
 
-std::string generateFileName(const std::string& prefix="dot", const std::string& extension="dot") {
-    auto now = std::chrono::system_clock::now();
+std::string generateFileName(std::string_view prefix = "dot", std::string_view extension = "dot") 
+{
+    auto now      = std::chrono::system_clock::now();
     auto time_now = std::chrono::system_clock::to_time_t(now);
 
     std::stringstream ss;
     // ss << std::put_time(std::localtime(&time_now), "%Y-%m-%d_%H-%M-%S");
-    return DUMP_DIR + DOT_DIR + prefix + "_" + ss.str() + "." + extension;
+
+    std::string res;
+    res.reserve(DUMP_DIR.size() + DOT_DIR.size() + prefix.size() + extension.size() + 32);
+
+    res += DUMP_DIR;
+    res += DOT_DIR;
+    res.append(prefix);
+    res += "_";
+    res += ss.str();
+    res += ".";
+    res.append(extension);
+
+    return res;
 }
 
 int main(int argc, char **argv)

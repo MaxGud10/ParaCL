@@ -113,7 +113,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << n.val_    << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(CONSTANT_NODE_COLOR) << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::CONSTANT_NODE_COLOR << std::dec
         << END_NODE;
 
         return os;
@@ -155,7 +155,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << n.name_   << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(VARIABLE_NODE_COLOR) << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::VARIABLE_NODE_COLOR << std::dec
         << END_NODE;
 
         return os;
@@ -225,20 +225,20 @@ public:
 
                 switch (op_)
                 {
-                    case BinaryOp::ADD:    result = leftVal + rightVal; break;
-                    case BinaryOp::SUB:    result = leftVal - rightVal; break;
-                    case BinaryOp::MUL:    result = leftVal * rightVal; break;
-                    case BinaryOp::MOD:    result = leftVal % rightVal; break;
+                    case BinaryOp::ADD:     result = leftVal + rightVal; break;
+                    case BinaryOp::SUB:     result = leftVal - rightVal; break;
+                    case BinaryOp::MUL:     result = leftVal * rightVal; break;
+                    case BinaryOp::MOD:     result = leftVal % rightVal; break;
 
-                    case BinaryOp::LS:     result = leftVal <  rightVal; break;
-                    case BinaryOp::GR:     result = leftVal >  rightVal; break;
-                    case BinaryOp::LS_EQ:  result = leftVal <= rightVal; break;
-                    case BinaryOp::GR_EQ:  result = leftVal >= rightVal; break;
-                    case BinaryOp::EQ:     result = leftVal == rightVal; break;
-                    case BinaryOp::NOT_EQ: result = leftVal != rightVal; break;
+                    case BinaryOp::LS:      result = leftVal <  rightVal; break;
+                    case BinaryOp::GR:      result = leftVal >  rightVal; break;
+                    case BinaryOp::LS_EQ:   result = leftVal <= rightVal; break;
+                    case BinaryOp::GR_EQ:   result = leftVal >= rightVal; break;
+                    case BinaryOp::EQ:      result = leftVal == rightVal; break;
+                    case BinaryOp::NOT_EQ:  result = leftVal != rightVal; break;
 
-                    case BinaryOp::BIT_AND: result = leftVal & rightVal; break;
-                    case BinaryOp::BIT_OR:  result = leftVal | rightVal; break;
+                    case BinaryOp::BIT_AND: result = leftVal  & rightVal; break;
+                    case BinaryOp::BIT_OR:  result = leftVal  | rightVal; break;
 
                     default:
                         throw std::runtime_error("Unknown binary operation");
@@ -255,10 +255,10 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "binary: " << BinaryOpNames[static_cast<std::size_t>(n.op_)]    << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR  << std::hex << static_cast<int>(BINARYOP_NODE_COLOR) << std::dec
+        << SET_FILLED << SET_COLOR  << std::hex << AST::dump_style::BINARYOP_NODE_COLOR << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.left_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.left_  << std::endl;
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.right_ << std::endl;
 
         n.left_ ->dump(os);
@@ -305,7 +305,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "unary: " << UnaryOpNames[static_cast<std::size_t>(n.op_)]    << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(UNARYOP_NODE_COLOR) << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::UNARYOP_NODE_COLOR  << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.operand_ << std::endl;
@@ -333,27 +333,8 @@ public:
 
     int eval(detail::Context& ctx) const override
     {
-		MSG("Evaluating assignment\n");
-
-        const std::string_view destName = dest_->get_name();
-
-		MSG("Getting assigned value\n");
-        const int value = expr_->eval(ctx);
-		LOG("Assigned value is {}\n", value);
-
-
-        for (int32_t scopeId = ctx.curScope_; scopeId >= 0; --scopeId)
-        {
-            auto& table = ctx.varTables_[static_cast<std::size_t>(scopeId)];
-            if (auto it = table.find(destName); it != table.end())
-            {
-                it->second = value;
-                return value;
-            }
-        }
-
-        ctx.varTables_[static_cast<std::size_t>(ctx.curScope_)][destName] = value;
-        return value;
+        MSG("Evaluating assignment\n");
+        return ctx.assign(dest_->get_name(), expr_->eval(ctx));
     }
 
     friend std::ostream& operator<<(std::ostream& os, const AssignNode& n)
@@ -361,7 +342,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "ASSIGN '='" << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR    << std::hex << static_cast<int>(ASSIGN_NODE_COLOR) << std::dec
+        << SET_FILLED << SET_COLOR    << std::hex << AST::dump_style::ASSIGN_NODE_COLOR << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_ << std::endl;
@@ -404,8 +385,8 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << "WHILE"  << SET_ADR   << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(WHILE_NODE_COLOR) << std::dec
+        << SET_LABEL  << "WHILE"   << SET_ADR  << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::WHILE_NODE_COLOR << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_  << std::endl;
@@ -442,14 +423,14 @@ public:
           body_(body) {}
 
 
-    int eval(detail::Context& ctx) const override
+    int eval(detail::Context &ctx) const override
     {
         int result = 0;
 
         if (init_)
             init_->eval(ctx);
 
-        while (cond_->eval(ctx))
+        for ( ; cond_->eval(ctx); )
         {
             result = body_->eval(ctx);
 
@@ -465,13 +446,13 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "FOR"     << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(WHILE_NODE_COLOR) << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::WHILE_NODE_COLOR << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.init_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_       << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_ << std::endl;
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.iter_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.body_       << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.body_ << std::endl;
 
         n.init_->dump(os);
         n.cond_->dump(os);
@@ -517,7 +498,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "IF"      << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(IF_NODE_COLOR) << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::IF_NODE_COLOR << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_        << std::endl;
@@ -562,7 +543,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "PRINT"   << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(PRINT_NODE_COLOR) << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::PRINT_NODE_COLOR << std::dec
         << END_NODE;
 
         os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_ << std::endl;
@@ -601,7 +582,7 @@ public:
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "IN"      << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(PRINT_NODE_COLOR) << std::dec
+        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::PRINT_NODE_COLOR << std::dec
         << END_NODE;
 
         return os;
