@@ -338,7 +338,7 @@ TEST(ASTTestBase, IfNode_TrueCondition)
 {
     // Create an if statement: if (x == 10) { y = 20 }
     auto condition = AST::binary_op(AST::variable("x"), AST::BinaryOp::EQ, AST::constant(10));
-    auto action = AST::assignment(AST::variable("y"), AST::constant(20));
+    auto action = AST::assignment(AST::variable("y"), AST::AssignType::ASSIGN_DEFAULT, AST::constant(20));
 
     auto ifNode = AST::if_stmt(condition, action);
 
@@ -429,12 +429,12 @@ TEST(ASTTestBase, ForNode_SimpleCount)
 {
     // for (x = 0; x < 3; x = x + 1) { y = y + 1; }
 
-    auto init = AST::assignment(AST::variable("x"), AST::constant(0));
+    auto init = AST::assignment(AST::variable("x"), AST::AssignType::ASSIGN_DEFAULT, AST::constant(0));
     auto cond = AST::binary_op(AST::variable("x"), AST::BinaryOp::LS, AST::constant(3));
-    auto iter = AST::assignment(AST::variable("x"),
+    auto iter = AST::assignment(AST::variable("x"), AST::AssignType::ASSIGN_DEFAULT,
                 AST::binary_op(AST::variable("x"), AST::BinaryOp::ADD, AST::constant(1)));
 
-    auto body = AST::assignment(AST::variable("y"),
+    auto body = AST::assignment(AST::variable("y"), AST::AssignType::ASSIGN_DEFAULT,
                 AST::binary_op(AST::variable("y"), AST::BinaryOp::ADD, AST::constant(1)));
 
     auto forNode = AST::for_stmt(init, cond, iter, body);

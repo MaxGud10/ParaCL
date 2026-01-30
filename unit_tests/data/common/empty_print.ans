@@ -1,0 +1,4 @@
+test.dat:1.9: error: 'f' was not declared in this scope
+  1 | print f;
+    |        ^
+

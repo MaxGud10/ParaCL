@@ -321,7 +321,7 @@ public:
     }
 };
 
-class AssignNode final : public StatementNode
+class AssignNode final : public ExpressionNode
 {
 private:
     VariableNode* dest_ = nullptr;

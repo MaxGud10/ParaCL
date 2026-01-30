@@ -65,22 +65,28 @@
     OR_OP       "||"
 	BIT_AND     "&"
     BIT_OR      "|"
+	ASSIGN_PLUS  "+="
+	ASSIGN_MINUS "-="
+	ASSIGN_MUL	 "*="
+	ASSIGN_DIV	 "/="
+	ASSIGN_MOD   "%="
+
 ;
 
 %token <std::string>	ID		"identifier"
 %token <int> 			NUMBER 	"number"
 
 // ----- Statement derived -----
-%nterm <AST::ExpressionNode*> 	Expr
-%nterm <AST::UnaryOpNode*> 		UnaryOp
-%nterm <AST::BinaryOpNode*> 	BinaryOp
-%nterm <AST::AssignNode*> 		Assign
-%nterm <AST::ScopeNode*> 		Scope
-%nterm <AST::PrintNode*> 		Print
-%nterm <AST::IfNode*> 			If_Stm
-%nterm <AST::ForNode*>          For_Stm
-%nterm <AST::WhileNode*> 		While_Stm
-%nterm <AST::VariableNode*> 	Variable
+%nterm <AST::ExpressionNode*> Expr
+%nterm <AST::UnaryOpNode*> 	  UnaryOp
+%nterm <AST::BinaryOpNode*>   BinaryOp
+%nterm <AST::AssignNode*>     Assign
+%nterm <AST::ScopeNode*> 		  Scope
+%nterm <AST::PrintNode*> 		  Print
+%nterm <AST::IfNode*> 			  If_Stm
+%nterm <AST::ForNode*>        For_Stm
+%nterm <AST::WhileNode*> 		  While_Stm
+%nterm <AST::VariableNode*>   Variable
 
 %nterm <AST::StatementNode*>	Statement
 
@@ -105,7 +111,10 @@
 %left "<" "<=" ">" ">="
 
 %left "+" "-"
-%left "*" "/"
+%left "*" "/" "%"
+%left "+=" "-="
+%left "*=" "/="
+
 
 %right UMINUS NOT
 
@@ -399,21 +408,21 @@ BinaryOp: 	Expr "+" Expr
 														AST::BinaryOp::EQ,
 														$3);
 			}
-		|	Expr "!=" Expr
+		|	Variable "*=" Expr
 			{
 				MSG("Initialising NOT_EQ operation\n");
 				$$ = drv.bld.create<AST::BinaryOpNode>(	$1,
 														AST::BinaryOp::NOT_EQ,
 														$3);
 			}
-		|	Expr "&&" Expr
+		|	Variable "-=" Expr
 			{
 				MSG("Initialising AND operation\n");
 				$$ = drv.bld.create<AST::BinaryOpNode>(	$1,
 														AST::BinaryOp::AND,
 													    $3);
 			}
-		|	Expr "||" Expr
+		|	Variable "/=" Expr
 			{
 				MSG("Initialising OR operation\n");
 				$$ = drv.bld.create<AST::BinaryOpNode>(	$1,

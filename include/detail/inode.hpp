@@ -59,7 +59,12 @@ inline constexpr  std::array<std::string_view, numBinaryOp> BinaryOpNames =
     "AND",
     "OR",
     "BIT_AND",
-    "BIT_OR"
+    "BIT_OR",
+    "ASSIGN_PLUS",
+    "ASSIGN_MINUS",
+    "ASSIGN_MUL",
+    "ASSIGN_DIV",
+    "ASSIGN_MOD"
 }};
 
 enum class UnaryOp: std::uint8_t
@@ -83,7 +88,7 @@ class INode
 public:
     virtual int  eval(detail::Context& ctx) const = 0;
     virtual void dump(std::ostream& os)     const = 0;
-    
+
     virtual ~INode() = default;
 };
 
