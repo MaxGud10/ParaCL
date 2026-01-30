@@ -38,6 +38,9 @@ BLANK 	[ \t\r]
 {BLANK}+	loc.step ();
 \n+			loc.lines (yyleng); loc.step ();
 
+
+"-="        return yy::parser::make_MINUS_ASSIGN(loc);
+
 "//".*           {}
 
 "/*"             { BEGIN(COMMENT); }
@@ -57,35 +60,37 @@ BLANK 	[ \t\r]
                     );
                  }
 
-
-"-"			return yy::parser::make_MINUS		(loc);
-"+"			return yy::parser::make_PLUS		(loc);
-"*"			return yy::parser::make_STAR		(loc);
-"/"			return yy::parser::make_SLASH		(loc);
-"("			return yy::parser::make_LPAREN		(loc);
-")"			return yy::parser::make_RPAREN		(loc);
-"="			return yy::parser::make_ASSIGN		(loc);
-"?"			return yy::parser::make_READ		(loc);
-"print"		return yy::parser::make_PRINT		(loc);
-"{"			return yy::parser::make_LCPAREN		(loc);
-"}"			return yy::parser::make_RCPAREN		(loc);
+"-"			return yy::parser::make_MINUS		    (loc);
+"+="    return yy::parser::make_PLUS_ASSIGN (loc);
+"+"			return yy::parser::make_PLUS		    (loc);
+"*="    return yy::parser::make_STAR_ASSIGN (loc);
+"*"			return yy::parser::make_STAR		    (loc);
+"/="    return yy::parser::make_SLASH_ASSIGN(loc);
+"/"			return yy::parser::make_SLASH		    (loc);
+"("			return yy::parser::make_LPAREN		  (loc);
+")"			return yy::parser::make_RPAREN		  (loc);
+"="			return yy::parser::make_ASSIGN		  (loc);
+"?"			return yy::parser::make_READ		    (loc);
+"print"	return yy::parser::make_PRINT		    (loc);
+"{"			return yy::parser::make_LCPAREN		  (loc);
+"}"			return yy::parser::make_RCPAREN		  (loc);
 ";"			return yy::parser::make_SEMIC       (loc);
-"if"		return yy::parser::make_IF			(loc);
-"else"      return yy::parser::make_ELSE        (loc);
-"while"		return yy::parser::make_WHILE		(loc);
-"for"       return yy::parser::make_FOR         (loc);
-">"			return yy::parser::make_GREATER		(loc);
-"<"			return yy::parser::make_LESS		(loc);
-">="		return yy::parser::make_GREATER_E	(loc);
-"<="		return yy::parser::make_LESS_E		(loc);
-"=="		return yy::parser::make_EQUAL		(loc);
-"!="		return yy::parser::make_NOT_EQUAL	(loc);
-"!"			return yy::parser::make_NOT			(loc);
-"%"			return yy::parser::make_MOD			(loc);
-"&&"        return yy::parser::make_AND_OP      (loc);
-"||"        return yy::parser::make_OR_OP       (loc);
-"&"         return yy::parser::make_BIT_AND     (loc);
-"|"         return yy::parser::make_BIT_OR      (loc);
+"if"		return yy::parser::make_IF			    (loc);
+"else"  return yy::parser::make_ELSE        (loc);
+"while"	return yy::parser::make_WHILE		    (loc);
+"for"   return yy::parser::make_FOR         (loc);
+">"			return yy::parser::make_GREATER		  (loc);
+"<"			return yy::parser::make_LESS		    (loc);
+">="		return yy::parser::make_GREATER_E	  (loc);
+"<="		return yy::parser::make_LESS_E	  	(loc);
+"=="		return yy::parser::make_EQUAL		    (loc);
+"!="		return yy::parser::make_NOT_EQUAL	  (loc);
+"!"			return yy::parser::make_NOT			    (loc);
+"%"			return yy::parser::make_MOD			    (loc);
+"&&"    return yy::parser::make_AND_OP      (loc);
+"||"    return yy::parser::make_OR_OP       (loc);
+"&"     return yy::parser::make_BIT_AND     (loc);
+"|"     return yy::parser::make_BIT_OR      (loc);
 "+="		return yy::parser::make_ASSIGN_PLUS (loc);
 "-="		return yy::parser::make_ASSIGN_MINUS(loc);
 "*="		return yy::parser::make_ASSIGN_MUL  (loc);

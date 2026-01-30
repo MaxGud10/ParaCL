@@ -1,88 +1,92 @@
 #pragma once
 
-#include "node.hpp"
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace AST
+#include "node.hpp"
+#include "detail/builder.hpp" 
+
+namespace AST 
 {
 
-inline std::unique_ptr<ConstantNode> constant(int value)
+inline NodeBuilder& dsl_builder()
 {
-    return std::make_unique<ConstantNode>(value);
+    static NodeBuilder bld;
+    return bld;
 }
 
-inline std::unique_ptr<VariableNode> variable(const std::string &name)
+inline void dsl_reset()
 {
-    return std::make_unique<VariableNode>(name);
+    dsl_builder().clear();
 }
 
-inline std::unique_ptr<BinaryOpNode> binary_op(ExprPtr lhs, AST::BinaryOp op, ExprPtr rhs)
+inline ConstantNode* constant(int value) 
 {
-    return std::make_unique<BinaryOpNode>(std::move(lhs), op, std::move(rhs));
+    return dsl_builder().create<ConstantNode>(value);
 }
 
-inline std::unique_ptr<UnaryOpNode> unary_op(ExprPtr operand, AST::UnaryOp op)
+inline VariableNode* variable(const std::string& name)
 {
-    return std::make_unique<UnaryOpNode>(std::move(operand), op);
+    return dsl_builder().create<VariableNode>(dsl_builder().intern(name));
 }
 
-inline std::unique_ptr<AssignNode> assignment(std::unique_ptr<VariableNode> dest, AssignType type, ExprPtr expr)
+inline BinaryOpNode* binary_op(ExprPtr lhs, AST::BinaryOp op, ExprPtr rhs)
 {
-    return std::make_unique<AssignNode>(std::move(dest), type, std::move(expr));
+    return dsl_builder().create<BinaryOpNode>(lhs, op, rhs);
 }
 
-inline std::unique_ptr<IfNode> if_stmt(ExprPtr condition, StmtPtr action)
+inline UnaryOpNode* unary_op(ExprPtr operand, AST::UnaryOp op)
 {
-    return std::make_unique<IfNode>(std::move(condition), std::move(action));
+    return dsl_builder().create<UnaryOpNode>(operand, op);
 }
 
-inline std::unique_ptr<WhileNode> while_stmt(ExprPtr condition, StmtPtr scope)
+inline AssignNode* assignment(VariableNode* dest, ExprPtr expr)
 {
-    return std::make_unique<WhileNode>(std::move(condition), std::move(scope));
+    return dsl_builder().create<AssignNode>(dest, expr);
 }
 
-inline std::unique_ptr<ForNode> for_stmt(std::unique_ptr<AssignNode> assignment,
-                                         ExprPtr                     condition,
-                                         std::unique_ptr<AssignNode> iter,
-                                         StmtPtr                     scope)
+inline IfNode* if_stmt(ExprPtr condition, StmtPtr action, StmtPtr else_action = nullptr)
 {
-    return std::make_unique<ForNode>(std::move(assignment),
-                                     std::move(condition),
-                                     std::move(iter),
-                                     std::move(scope));
+    return dsl_builder().create<IfNode>(condition, action, else_action);
 }
 
-inline std::unique_ptr<PrintNode> print(ExprPtr expr)
+inline WhileNode* while_stmt(ExprPtr condition, StmtPtr scope)
 {
-    return std::make_unique<PrintNode>(std::move(expr));
+    return dsl_builder().create<WhileNode>(condition, scope);
 }
 
-inline std::unique_ptr<InNode> in()
+inline ForNode* for_stmt(AssignNode* init, ExprPtr condition, AssignNode* iter, StmtPtr scope)
 {
-    return std::make_unique<InNode>();
+    return dsl_builder().create<ForNode>(init, condition, iter, scope);
 }
 
-inline std::unique_ptr<ScopeNode> scope(std::vector<StmtPtr> statements)
+inline PrintNode* print(ExprPtr expr)
 {
-    return std::make_unique<ScopeNode>(std::move(statements));
+    return dsl_builder().create<PrintNode>(expr);
+}
+
+inline InNode* in()
+{
+    return dsl_builder().create<InNode>();
+}
+
+inline ScopeNode* scope(std::vector<StmtPtr> statements)
+{
+    return dsl_builder().create<ScopeNode>(std::move(statements));
 }
 
 } // namespace AST
 
-#define CONST(val) AST::constant(val)
-#define VAR(name) AST::variable(name);
-#define BINARY(lhs, op, rhs) AST::binary_op(std::move(lhs), op, std::move(rhs))
-#define UNARY(operand, op) AST::unary_op(std::move(operand), op)
-#define ASSIGN(var, expr) AST::assignment(std::move(var), std::move(expr))
-#define PRINT(expr) AST::print(std::move(expr))
-#define WHILE(cond, body) AST::while_stmt(std::move(cond), std::move(body))
-#define FOR(init, cond, iter, body) AST::for_stmt(std::move(init), std::move(cond), std::move(iter), std::move(body))
-#define IF(cond, action) AST::if_stmt(std::move(cond), std::move(action))
-#define IFELSE(cond, action, else_like) AST::if_stmt(std::move(cond), std::move(action), std::move(else_like))
-#define ELSEIF(cond, action) AST::else_if_stmt(std::move(cond), std::move(action))
-#define ELSE_IFELSE(cond, action, else_like) AST::else_if_stmt(std::move(cond), std::move(action), std::move(else_like))
-#define ELSE(action) AST::else_stmt(std::move(action))
-#define IN() AST::in()
-#define BLOCK(stmts) AST::scope(std::move(stmts))
+#define CONST(val)                      AST::constant(val)
+#define VAR(name)                       AST::variable(name)
+#define BINARY(lhs, op, rhs)            AST::binary_op((lhs), (op), (rhs))
+#define UNARY(operand, op)              AST::unary_op((operand), (op))
+#define ASSIGN(var, expr)               AST::assignment((var), (expr))
+#define PRINT(expr)                     AST::print((expr))
+#define WHILE(cond, body)               AST::while_stmt((cond), (body))
+#define FOR(init, cond, iter, body)     AST::for_stmt((init), (cond), (iter), (body))
+#define IF(cond, action)                AST::if_stmt((cond), (action))
+#define IFELSE(cond, action, else_like) AST::if_stmt((cond), (action), (else_like))
+#define IN()                            AST::in()
+#define BLOCK(stmts)                    AST::scope((stmts))
