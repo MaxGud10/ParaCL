@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/paracl.dir/main.cpp.o -o paracl  libparacl_core.a 

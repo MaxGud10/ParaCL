@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
-
 project(ParaCL)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 enable_testing()
 
@@ -110,6 +113,10 @@ add_library(paracl_core
     ${BISON_Parser_OUTPUTS}
 )
 
+target_compile_features(paracl_core PUBLIC cxx_std_20)
+set_target_properties(paracl_core PROPERTIES CXX_EXTENSIONS OFF)
+
+
 target_include_directories(paracl_core PUBLIC
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include/detail
@@ -128,6 +135,9 @@ else()
 endif()
 
 add_executable(paracl main.cpp)
+
+target_compile_features(paracl PRIVATE cxx_std_20)
+set_target_properties(paracl PROPERTIES CXX_EXTENSIONS OFF)
 
 target_link_libraries(paracl PRIVATE paracl_core)
 

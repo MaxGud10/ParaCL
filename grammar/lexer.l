@@ -22,8 +22,6 @@ ID		[a-zA-Z][a-zA-Z_0-9]*
 INT		[0-9]+
 BLANK 	[ \t\r]
 
-%x COMMENT
-
 %{
 	#define YY_USER_ACTION	loc.columns (yyleng);
 %}
@@ -38,29 +36,13 @@ BLANK 	[ \t\r]
 {BLANK}+	loc.step ();
 \n+			loc.lines (yyleng); loc.step ();
 
-"//".*           {}
-
-"/*"             { BEGIN(COMMENT); }
-
-<COMMENT>"*/"    { BEGIN(INITIAL); }
-
-<COMMENT>\n      {
-                    loc.lines(1);
-                    loc.step();
-                 }
-
-<COMMENT>.       {}
-
-<COMMENT><<EOF>> {
-                    throw yy::parser::syntax_error(
-                        loc, "unterminated comment"
-                    );
-                 }
-
-
+"-="        return yy::parser::make_MINUS_ASSIGN(loc);
 "-"			return yy::parser::make_MINUS		(loc);
+"+="        return yy::parser::make_PLUS_ASSIGN (loc);
 "+"			return yy::parser::make_PLUS		(loc);
+"*="        return yy::parser::make_STAR_ASSIGN (loc);
 "*"			return yy::parser::make_STAR		(loc);
+"/="        return yy::parser::make_SLASH_ASSIGN(loc);
 "/"			return yy::parser::make_SLASH		(loc);
 "("			return yy::parser::make_LPAREN		(loc);
 ")"			return yy::parser::make_RPAREN		(loc);
@@ -86,12 +68,6 @@ BLANK 	[ \t\r]
 "||"        return yy::parser::make_OR_OP       (loc);
 "&"         return yy::parser::make_BIT_AND     (loc);
 "|"         return yy::parser::make_BIT_OR      (loc);
-"+="		return yy::parser::make_ASSIGN_PLUS (loc);
-"-="		return yy::parser::make_ASSIGN_MINUS(loc);
-"*="		return yy::parser::make_ASSIGN_MUL  (loc);
-"/="		return yy::parser::make_ASSIGN_DIV  (loc);
-"%="		return yy::parser::make_ASSIGN_MOD  (loc);
-
 
 {INT}		return make_NUMBER         (yytext,  loc);
 {ID}		return yy::parser::make_ID (yytext,  loc);
