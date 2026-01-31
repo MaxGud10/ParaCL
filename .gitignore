@@ -7,3 +7,6 @@ third_party
 dumps
 draft.cpp
 CMakeUserPresets.json
+build-bring
+build-main
+draft.hpp

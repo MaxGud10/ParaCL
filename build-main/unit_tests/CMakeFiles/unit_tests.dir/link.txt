@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/unit_tests.dir/src/unit_tests.cpp.o CMakeFiles/unit_tests.dir/main.cpp.o -o unit_tests  ../libparacl_core.a /usr/local/lib/libgtest.a /usr/local/lib/libgtest_main.a /usr/local/lib/libgtest.a 

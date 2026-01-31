@@ -1,2 +1,0 @@
-/usr/bin/ar qc libparacl_core.a CMakeFiles/paracl_core.dir/parser/lexer.cpp.o CMakeFiles/paracl_core.dir/parser/parser.cpp.o
-/usr/bin/ranlib libparacl_core.a

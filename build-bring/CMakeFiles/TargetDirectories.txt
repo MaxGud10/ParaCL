@@ -1,9 +1,0 @@
-/home/max/WORK/ParaCL/build-bring/CMakeFiles/paracl_core.dir
-/home/max/WORK/ParaCL/build-bring/CMakeFiles/paracl.dir
-/home/max/WORK/ParaCL/build-bring/CMakeFiles/test.dir
-/home/max/WORK/ParaCL/build-bring/CMakeFiles/edit_cache.dir
-/home/max/WORK/ParaCL/build-bring/CMakeFiles/rebuild_cache.dir
-/home/max/WORK/ParaCL/build-bring/unit_tests/CMakeFiles/unit_tests.dir
-/home/max/WORK/ParaCL/build-bring/unit_tests/CMakeFiles/test.dir
-/home/max/WORK/ParaCL/build-bring/unit_tests/CMakeFiles/edit_cache.dir
-/home/max/WORK/ParaCL/build-bring/unit_tests/CMakeFiles/rebuild_cache.dir
