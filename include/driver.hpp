@@ -7,7 +7,6 @@
 
 #include "parser.hpp"
 #include "ast.hpp"
-#include "builder.hpp"
 
 extern int yy_flex_debug;
 extern int yydebug;
@@ -28,12 +27,12 @@ public: /* members */
 	std::string 	                       file;
 	yy::location 	                       location;
 	AST::AST		                       ast;
-	AST::NodeBuilder                       bld;
 	std::vector<std::vector<AST::StmtPtr>> stm_table;
 	size_t                                 cur_scope_id = 0;
 	std::vector<std::string>               source_lines;
 
 public:
+
   	Driver(std::ostream& out = std::cout) :	ast(out)
 	{
 		stm_table.push_back(std::vector<AST::StmtPtr>());

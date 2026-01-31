@@ -13,11 +13,17 @@ namespace AST
 
 class AST final
 {
+private:
+    using VarTable = std::unordered_map<std::string, int>;
+
 public:
-    ScopeNode* globalScope = nullptr;
+    std::unique_ptr<ScopeNode> globalScope;
 
 private:
+    std::vector<VarTable>      VarTables_;
+
     detail::Context ctx;
+
 
 public:
 	AST(std::ostream& out = std::cout) : ctx(out) {}

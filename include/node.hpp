@@ -1,20 +1,18 @@
 #pragma once
 
-#include <cmath>
-#include <cstdint>
-#include <stdexcept>
-#include <vector>
-#include <iostream>
-#include <string_view>
-#include <ranges>
-#include <algorithm>
-
 #include "detail/context.hpp"
 #include "detail/inode.hpp"
 #include "inode.hpp"
 #include "log.h"
 #include "nodeDump.hpp"
 
+#include <cmath>
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#include <iostream>
 
 namespace AST
 {
@@ -25,9 +23,9 @@ class ExpressionNode : public StatementNode {};
 
 class ConditionalStatementNode : public StatementNode {};
 
-using ExprPtr     = ExpressionNode*;
-using StmtPtr     = StatementNode*;
-using CondStmtPtr = ConditionalStatementNode*;
+using ExprPtr     = std::unique_ptr<ExpressionNode>;
+using StmtPtr     = std::unique_ptr<StatementNode>;
+using CondStmtPtr = std::unique_ptr<ConditionalStatementNode>;
 
 class ScopeNode final : public StatementNode
 {
@@ -35,8 +33,13 @@ private:
     std::vector<StmtPtr> children_;
 
 public:
-    explicit ScopeNode(std::vector<StmtPtr> stms)
-        : children_(std::move(stms)) {}
+	ScopeNode(std::vector<StmtPtr>&& stms)
+	{
+		for (auto& stm : stms)
+		{
+			children_.push_back(std::move(stm));
+		}
+	}
 
     int eval(detail::Context& ctx) const override
     {
@@ -52,12 +55,12 @@ public:
 		MSG("Scopes children:\n");
 		for ([[maybe_unused]]const auto& child : children_)
         {
-			LOG("{}\n", static_cast<const void*>(child));
+			LOG("{}\n", static_cast<const void*>(child.get()));
         }
 
         for (const auto& child : children_)
         {
-			LOG("Evaluating {}\n", static_cast<const void*>(child));
+			LOG("Evaluating {}\n", static_cast<const void*>(child.get()));
             child->eval(ctx);
         }
 
@@ -86,9 +89,10 @@ public:
     }
 
 	size_t nstms() const { return children_.size(); }
-
-    const std::vector<StmtPtr> &get_children() const { return children_; }
+    std::vector<StmtPtr> get_children() const { return std::move(const_cast<std::vector<StmtPtr>&>(children_)); ; }
 };
+
+using ScopePtr = std::unique_ptr<ScopeNode>;
 
 class ConstantNode final : public ExpressionNode
 {
@@ -96,9 +100,9 @@ private:
     const int val_;
 
 public:
-    explicit ConstantNode(int val) : val_(val) {}
+    ConstantNode(int val) : val_(val) {}
 
-    int eval(detail::Context&) const override
+    int eval([[maybe_unused]]detail::Context& ctx) const override
     {
 		LOG("Evaluating constant: {}\n", val_);
         return val_;
@@ -112,8 +116,8 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const ConstantNode& n) {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << n.val_    << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::CONSTANT_NODE_COLOR << std::dec
+        << SET_LABEL << n.val_ << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(CONSTANT_NODE_COLOR) << std::dec
         << END_NODE;
 
         return os;
@@ -131,31 +135,39 @@ public:
 class VariableNode final : public ExpressionNode
 {
 private:
-    std::string_view name_;
+    std::string name_;
 
 public:
-	explicit VariableNode(std::string_view name): name_(name) {}
+	VariableNode(const std::string& name): name_(name) {}
 
-    std::string_view get_name() const { return name_; }
+    const std::string& get_name() const
+    {
+        return name_;
+    }
 
     int eval(detail::Context& ctx) const override
     {
 		LOG("Evaluating variable: {}\n", name_);
 
-        auto tableIt = std::find_if(ctx.varTables_.rbegin(), ctx.varTables_.rend(),
-            [&](const auto& table) { return table.contains(name_); });
+        for (int32_t scopeId = ctx.curScope_; scopeId >= 0; --scopeId)
+        {
+            auto it = ctx.varTables_[static_cast<std::size_t>(scopeId)].find(name_);
 
-        if (tableIt != ctx.varTables_.rend())
-            return tableIt->find(name_)->second;
+            if (it != ctx.varTables_[static_cast<std::size_t>(scopeId)].end())
+            {
+				LOG("It's {}\n", it->second);
+                return it->second;
+            }
+        }
 
-		throw std::runtime_error("Undeclared variable: " + std::string(name_) + "\n");
+		throw std::runtime_error("'" + name_ + "' was not declared in this scope");
     }
 
     friend std::ostream& operator<<(std::ostream& os, const VariableNode& n) {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << n.name_   << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::VARIABLE_NODE_COLOR << std::dec
+        << SET_LABEL << n.name_ << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(VARIABLE_NODE_COLOR) << std::dec
         << END_NODE;
 
         return os;
@@ -175,93 +187,101 @@ private:
     BinaryOp op_;
 
 public:
-    BinaryOpNode(ExpressionNode* left, BinaryOp op, ExpressionNode* right)
-        : left_(left), right_(right), op_(op) {}
+    BinaryOpNode(ExprPtr&& left, BinaryOp op, ExprPtr&& right) : left_(std::move(left)), right_(std::move(right)), op_(op) {}
 
     int eval(detail::Context& ctx) const override
     {
-        MSG("Evaluating Binary Operation\n");
+		MSG("Evaluating Binary Operation\n");
 
-        int result = 0;
+        int leftVal = left_->eval(ctx);
+        int rightVal = right_->eval(ctx);
+
+		int result = 0;
 
         switch (op_)
         {
-            case BinaryOp::AND:
-            {
-                const int leftVal = left_->eval(ctx);
-                if (!leftVal)
-                    return 0;               
+            case BinaryOp::ADD:
+                result = leftVal + rightVal;
+				break;
 
-                const int rightVal = right_->eval(ctx);
-                return rightVal ? 1 : 0;
-            }
+            case BinaryOp::SUB:
+                result = leftVal - rightVal;
+				break;
 
-            case BinaryOp::OR:
-            {
-                const int leftVal = left_->eval(ctx);
-                if (leftVal)
-                    return 1;              
-
-                const int rightVal = right_->eval(ctx);
-                return rightVal ? 1 : 0;
-            }
+            case BinaryOp::MUL:
+                result = leftVal * rightVal;
+				break;
 
             case BinaryOp::DIV:
-            {
-                const int leftVal  = left_ ->eval(ctx);
-                const int rightVal = right_->eval(ctx);
-
-                if (rightVal == 0) 
-                    throw std::runtime_error("Divide by zero");
-
+                if (rightVal == 0) { throw std::runtime_error("Divide by zero"); }
                 result = leftVal / rightVal;
+				break;
+
+            case BinaryOp::MOD:
+                result = leftVal % rightVal;
+				break;
+
+            case BinaryOp::LS:
+                result = leftVal < rightVal;
+				break;
+
+            case BinaryOp::GR:
+                result = leftVal > rightVal;
+				break;
+
+            case BinaryOp::LS_EQ:
+                result = leftVal <= rightVal;
+				break;
+
+            case BinaryOp::GR_EQ:
+                result = leftVal >= rightVal;
+				break;
+
+            case BinaryOp::EQ:
+                result = leftVal == rightVal;
+				break;
+
+            case BinaryOp::NOT_EQ:
+                result = leftVal != rightVal;
+				break;
+
+            case BinaryOp::AND:
+                result = leftVal && rightVal;
+				break;
+
+            case BinaryOp::OR:
+                result = leftVal || rightVal;
+				break;
+
+            case BinaryOp::BIT_AND:
+                result = leftVal & rightVal;
                 break;
-            }
+
+            case BinaryOp::BIT_OR:
+                result = leftVal | rightVal;
+                break;
 
             default:
-            {
-                const int leftVal  = left_ ->eval(ctx);
-                const int rightVal = right_->eval(ctx);
-
-                switch (op_)
-                {
-                    case BinaryOp::ADD:     result = leftVal + rightVal; break;
-                    case BinaryOp::SUB:     result = leftVal - rightVal; break;
-                    case BinaryOp::MUL:     result = leftVal * rightVal; break;
-                    case BinaryOp::MOD:     result = leftVal % rightVal; break;
-
-                    case BinaryOp::LS:      result = leftVal <  rightVal; break;
-                    case BinaryOp::GR:      result = leftVal >  rightVal; break;
-                    case BinaryOp::LS_EQ:   result = leftVal <= rightVal; break;
-                    case BinaryOp::GR_EQ:   result = leftVal >= rightVal; break;
-                    case BinaryOp::EQ:      result = leftVal == rightVal; break;
-                    case BinaryOp::NOT_EQ:  result = leftVal != rightVal; break;
-
-                    case BinaryOp::BIT_AND: result = leftVal  & rightVal; break;
-                    case BinaryOp::BIT_OR:  result = leftVal  | rightVal; break;
-
-                    default:
-                        throw std::runtime_error("Unknown binary operation");
-                }
-            }
+                throw std::runtime_error("Unknown binary operation");
         }
 
-        LOG("It's {}\n", result);
-        return result;
+		LOG("It's {}\n", result);
+
+		return result;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const BinaryOpNode& n)
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << "binary: " << BinaryOpNames[static_cast<std::size_t>(n.op_)]    << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR  << std::hex << AST::dump_style::BINARYOP_NODE_COLOR << std::dec
+        << SET_LABEL << "binary: " << BinaryOpNames[static_cast<std::size_t>(n.op_)] << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(BINARYOP_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.left_  << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.right_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.left_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.right_.get() << std::endl;
 
-        n.left_ ->dump(os);
+        n.left_->dump(os);
         n.right_->dump(os);
 
         return os;
@@ -280,8 +300,7 @@ private:
     UnaryOp op_;
 
 public:
-    UnaryOpNode(ExprPtr operand, UnaryOp op) 
-        : operand_(operand), op_(op) {} 
+    UnaryOpNode(ExprPtr&& operand, UnaryOp op) : operand_(std::move(operand)), op_(op) {}
 
     int eval(detail::Context& ctx) const override
     {
@@ -304,11 +323,11 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << "unary: " << UnaryOpNames[static_cast<std::size_t>(n.op_)]    << SET_ADR << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::UNARYOP_NODE_COLOR  << std::dec
+        << SET_LABEL << "unary: " << UnaryOpNames[static_cast<std::size_t>(n.op_)] << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(UNARYOP_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.operand_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.operand_.get() << std::endl;
 
         n.operand_->dump(os);
 
@@ -324,28 +343,75 @@ public:
 class AssignNode final : public ExpressionNode
 {
 private:
-    VariableNode* dest_ = nullptr;
-    ExprPtr       expr_ = nullptr; 
+    std::unique_ptr<VariableNode> dest_;
+    ExprPtr                       expr_;
+    AssignType                    type_;
 
 public:
-    AssignNode(VariableNode* dest, ExprPtr expr)
-        : dest_(dest), expr_(expr) {}
+    AssignNode(std::unique_ptr<VariableNode>&& dest, AssignType type, ExprPtr&& expr) : dest_(std::move(dest)), expr_(std::move(expr)), type_(type) {}
 
     int eval(detail::Context& ctx) const override
     {
-        MSG("Evaluating assignment\n");
-        return ctx.assign(dest_->get_name(), expr_->eval(ctx));
+		MSG("Evaluating assignment\n");
+
+        std::string destName = dest_->get_name();
+
+		MSG("Getting assigned value\n");
+        int value = 0;
+        if (type_ != AssignType::ASSIGN_DEFAULT) {
+            auto it = ctx.varTables_[static_cast<std::size_t>(ctx.curScope_)].find(dest_->get_name());
+            if (it != ctx.varTables_[static_cast<std::size_t>(ctx.curScope_)].end()) {
+                switch (type_) {
+                    case AssignType::ASSIGN_PLUS:
+                        value = it->second + expr_->eval(ctx);
+                        break;
+                    case AssignType::ASSIGN_MINUS:
+                        value = it->second - expr_->eval(ctx);
+                        break;
+                    case AssignType::ASSIGN_MUL:
+                        value = it->second * expr_->eval(ctx);
+                        break;
+                    case AssignType::ASSIGN_DIV:
+                        value = it->second / expr_->eval(ctx);
+                        break;
+                    case AssignType::ASSIGN_MOD:
+                        value = it->second % expr_->eval(ctx);
+                        break;
+                    default:
+                        LOG("Blya: unexpected AssignType {} in switch\n",
+                            static_cast<int>(type_));
+                        break;
+                    }
+                }
+        } 
+        else 
+            value = expr_->eval(ctx);
+		LOG("Assigned value is {}\n", value);
+
+        int32_t scopeId = 0;
+
+        while (scopeId < ctx.curScope_)
+		{
+            if (ctx.varTables_[static_cast<std::size_t>(scopeId)].contains(destName))
+                break;
+
+			scopeId++;
+		}
+
+        ctx.varTables_[static_cast<std::size_t>(scopeId)][destName] = value;
+
+        return value;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const AssignNode& n)
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << "ASSIGN '='" << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR    << std::hex << AST::dump_style::ASSIGN_NODE_COLOR << std::dec
+        << SET_LABEL << "ASSIGN '='" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(ASSIGN_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_.get() << std::endl;
 
         n.expr_->dump(os);
 
@@ -366,8 +432,7 @@ private:
     StmtPtr scope_;
 
 public:
-    WhileNode(ExprPtr cond, StmtPtr scope)
-        : cond_(cond), scope_(scope) {}
+    WhileNode(ExprPtr&& cond, StmtPtr&& scope) : cond_(std::move(cond)), scope_(std::move(scope)) {}
 
     int eval(detail::Context& ctx) const override
     {
@@ -385,14 +450,14 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << "WHILE"   << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::WHILE_NODE_COLOR << std::dec
+        << SET_LABEL << "WHILE" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(WHILE_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_  << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.scope_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.scope_.get() << std::endl;
 
-        n.cond_ ->dump(os);
+        n.cond_->dump(os);
         n.scope_->dump(os);
 
         return os;
@@ -405,32 +470,32 @@ public:
 
 };
 
-using AssignPtr = AssignNode*;
+using AssignPtr = std::unique_ptr<AssignNode>;
 
 class ForNode final : public ConditionalStatementNode
 {
 private:
-    AssignPtr init_ = nullptr;
-    ExprPtr   cond_ = nullptr;
-    AssignPtr iter_ = nullptr;
-    StmtPtr   body_ = nullptr;
+    AssignPtr                   init_;
+    ExprPtr                     cond_;
+    AssignPtr                   iter_;
+    StmtPtr                     body_;
 
 public:
-    ForNode(AssignPtr init, ExprPtr cond, AssignPtr iter, StmtPtr body)
-        : init_(init),
-          cond_(cond),
-          iter_(iter),
-          body_(body) {}
+    ForNode(std::unique_ptr<AssignNode>&& init, ExprPtr&& cond,
+            std::unique_ptr<AssignNode>&& iter, StmtPtr&& body)
+        : init_(std::move(init)),
+          cond_(std::move(cond)),
+          iter_(std::move(iter)),
+          body_(std::move(body)) {}
 
-
-    int eval(detail::Context &ctx) const override
+    int eval(detail::Context& ctx) const override
     {
         int result = 0;
 
         if (init_)
             init_->eval(ctx);
 
-        for ( ; cond_->eval(ctx); )
+        while (cond_->eval(ctx))
         {
             result = body_->eval(ctx);
 
@@ -445,14 +510,14 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << "FOR"     << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::WHILE_NODE_COLOR << std::dec
+        << SET_LABEL << "FOR" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(WHILE_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.init_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.iter_ << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.body_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.init_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.iter_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.body_.get() << std::endl;
 
         n.init_->dump(os);
         n.cond_->dump(os);
@@ -476,10 +541,10 @@ private:
     StmtPtr else_action_;
 
 public:
-    IfNode(ExprPtr cond, StmtPtr action, StmtPtr else_action = nullptr)
-        : cond_       (cond),
-          action_     (action),
-          else_action_(else_action) {}
+    IfNode(ExprPtr&& cond, StmtPtr&& action, StmtPtr&& else_action = nullptr)
+        : cond_       (std::move(cond       )),
+          action_     (std::move(action     )),
+          else_action_(std::move(else_action)) {}
 
 
     int eval(detail::Context& ctx) const override
@@ -497,15 +562,15 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << "IF"      << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::IF_NODE_COLOR << std::dec
+        << SET_LABEL << "IF" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(IF_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_        << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.action_      << std::endl;
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.else_action_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.action_.get() << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.else_action_.get() << std::endl;
 
-        n.cond_  ->dump(os);
+        n.cond_->dump(os);
         n.action_->dump(os);
         if (n.else_action_) n.else_action_->dump(os);
 
@@ -525,7 +590,7 @@ private:
     ExprPtr expr_;
 
 public:
-    explicit PrintNode(ExprPtr expr) : expr_(expr) {}
+    PrintNode(ExprPtr&& expr) : expr_(std::move(expr)) {}
 
     int eval(detail::Context& ctx) const override
     {
@@ -542,11 +607,11 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << "PRINT"   << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::PRINT_NODE_COLOR << std::dec
+        << SET_LABEL << "PRINT" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(PRINT_NODE_COLOR) << std::dec
         << END_NODE;
 
-        os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_ << std::endl;
+        os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_.get() << std::endl;
 
         n.expr_->dump(os);
 
@@ -563,7 +628,7 @@ public:
 class InNode final : public ExpressionNode
 {
 public:
-    int eval(detail::Context&) const override
+    int eval([[maybe_unused]] detail::Context& ctx) const override
     {
         int value = 0;
 
@@ -581,8 +646,8 @@ public:
     {
         os << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << "IN"      << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::PRINT_NODE_COLOR << std::dec
+        << SET_LABEL << "IN" << SET_ADR << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << static_cast<int>(PRINT_NODE_COLOR) << std::dec
         << END_NODE;
 
         return os;
@@ -596,8 +661,8 @@ public:
 
 class VoidNode final : public ExpressionNode
 {
-	int  eval(detail::Context&) const override { return 0; }
-    void dump(std::ostream&)    const override {}
+	int eval([[maybe_unused]] detail::Context& ctx) const override { return 0; }
+    void dump(std::ostream& os) const override {}
 };
 
 } // namespace AST
