@@ -118,7 +118,3 @@ ctest --output-on-failure
     - он генерирует `.dot` в директории `dumps/dot`
 2. `python3 dot2png.py` - это [скрипт](./dot2png.py) для генерации `.png` картинки из `.dot` файла.
 
-
-
-
-
