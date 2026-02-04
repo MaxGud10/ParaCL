@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include <string_view>
 
@@ -27,3 +27,5 @@ namespace AST::dump_style
     inline constexpr int IN_NODE_COLOR       = 0xAFEEEE;
     inline constexpr int CONSTANT_NODE_COLOR = 0x98FB98;
 }
+
+

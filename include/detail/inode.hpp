@@ -7,6 +7,8 @@
 #include <unordered_map>
 
 #include <context.hpp>
+#include <visitor.hpp>
+
 
 namespace AST
 {
@@ -43,7 +45,7 @@ enum class BinaryOp : std::uint8_t
 inline constexpr std::size_t numBinaryOp =
     static_cast<std::size_t>(BinaryOp::COUNT);
 
-inline constexpr  std::array<std::string_view, numBinaryOp> BinaryOpNames = 
+inline constexpr  std::array<std::string_view, numBinaryOp> BinaryOpNames =
 {{
     "ADD",
     "SUB",
@@ -72,7 +74,7 @@ enum class UnaryOp: std::uint8_t
 inline constexpr std::size_t numUnaryOp =
     static_cast<std::size_t>(UnaryOp::COUNT);
 
-inline constexpr std::array<std::string_view, numUnaryOp> UnaryOpNames = 
+inline constexpr std::array<std::string_view, numUnaryOp> UnaryOpNames =
 {{
     "NEG",
     "NOT"
@@ -83,7 +85,9 @@ class INode
 public:
     virtual int  eval(detail::Context& ctx) const = 0;
     virtual void dump(std::ostream& os)     const = 0;
-    
+    virtual void accept(Visitor& visitor)   const = 0;
+
+
     virtual ~INode() = default;
 };
 
