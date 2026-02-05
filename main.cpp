@@ -7,17 +7,18 @@
 #include "driver.hpp"
 #include "log.h"
 #include "inode.hpp"
+#include "dot_printer.hpp"
 
 constexpr std::string_view DUMP_DIR = "./dumps/";
 constexpr std::string_view DOT_DIR  = "dot/";
 
-std::string generateFileName(std::string_view prefix = "dot", std::string_view extension = "dot") 
+std::string generateFileName(std::string_view prefix = "dot", std::string_view extension = "dot")
 {
     auto now      = std::chrono::system_clock::now();
     auto time_now = std::chrono::system_clock::to_time_t(now);
 
     std::stringstream ss;
-    // ss << std::put_time(std::localtime(&time_now), "%Y-%m-%d_%H-%M-%S");
+    ss << std::put_time(std::localtime(&time_now), "%Y-%m-%d_%H-%M-%S");
 
     std::string res;
     res.reserve(DUMP_DIR.size() + DOT_DIR.size() + prefix.size() + extension.size() + 32);
@@ -58,31 +59,35 @@ int main(int argc, char **argv)
         }
     }
 
-    if (status == 0 && drv.ast.globalScope != nullptr) 
+    if (status == 0 && drv.ast.globalScope != nullptr)
     {
         LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
-        
-        if (drv.ast.globalScope->nstms() > 0) 
+
+        if (drv.ast.globalScope->nstms() > 0)
           drv.ast.eval();
-        else 
+        else
             std::cout << "No statements to execute" << std::endl;
-    } 
-    else 
+    }
+    else {
         std::cerr << "Parsing failed or AST not created" << std::endl;
+    }
 
     // handling dump flag
-    for (int i = 0; i < argc; ++i) 
+    for (int i = 0; i < argc; ++i)
     {
-        if (!strcmp(argv[i], "--dump")) 
+        if (!strcmp(argv[i], "--dump"))
         {
             std::string fileName = generateFileName();
             std::cout << "generatedfileName" << fileName << std::endl;
             std::ofstream outFile(fileName);
             if (outFile.is_open())
             {
-                drv.ast.dump(outFile);
+                DotPrinter printer(outFile);
+                std::cout << "AAAAA" << std::endl;
+                drv.ast.accept(printer);
+                // drv.ast.dump(outFile);
                 std::cout << "dumped" << std::endl;
-                outFile.close();
+                // outFile.close();
                 return status;
             }
         }

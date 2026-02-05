@@ -11,7 +11,7 @@
 
 #include "detail/context.hpp"
 #include "detail/inode.hpp"
-#include "detail/visitor.hpp"
+#include "detail/ivisitor.hpp"
 #include "inode.hpp"
 #include "log.h"
 #include "nodeDump.hpp"
@@ -19,6 +19,7 @@
 
 namespace AST
 {
+
 
 class StatementNode  : public INode {};
 
@@ -73,16 +74,9 @@ public:
 		return 0;
     }
 
-    void dump(std::ostream& os) const override
-    {
-        for (const auto &child : children_) {
-            MSG("dumping child\n");
-            child->dump(os);
-            MSG("dumped child\n");
-        }
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
+    void accept(const Visitor& visitor) const override {
         visitor.VisitScopeNode(*this);
     }
 
@@ -113,13 +107,9 @@ public:
         return val_;
     }
 
-    void dump(std::ostream& os) const override {
-        MSG("dumping constant node\n");
-        os << *this;
-        MSG("dumped constant node\n");
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
+    void accept(const Visitor& visitor) const override {
         visitor.VisitConstantNode(*this);
     }
 
@@ -153,12 +143,9 @@ public:
 		throw std::runtime_error("Undeclared variable: " + std::string(name_) + "\n");
     }
 
-    void dump(std::ostream& os) const override {
-        MSG("dumping variable node\n");
-        os << *this;
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
+    void accept(const Visitor& visitor) const override {
         visitor.VisitVariableNode(*this);
     }
 
@@ -249,19 +236,16 @@ public:
         return result;
     }
 
-    void dump(std::ostream& os) const override {
-        MSG("dumping binary node\n");
-        os << *this;
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
+    void accept(const Visitor& visitor) const override {
         visitor.VisitBinaryOpNode(*this);
     }
 
     public: // getters
-        const ExprPtr get_left()    { return left_; }
-        const ExprtPtr get_right()  { return right_; }
-        const BinaryOp get_op()     { return op_; }
+        const ExprPtr get_left() const    { return left_; }
+        const ExprPtr get_right() const  { return right_; }
+        const BinaryOp get_op() const     { return op_; }
 };
 
 class UnaryOpNode final : public ExpressionNode
@@ -291,18 +275,15 @@ public:
         }
     }
 
-    void dump(std::ostream& os) const override {
-        MSG("dumping unary node\n");
-        os << *this;
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
+    void accept(const Visitor& visitor) const override {
         visitor.VisitUnaryOpNode(*this);
     }
 
     public: // getters
-        const ExprPtr get_operand() { return operand_; }
-        const ExprPtr get_op() { return op_; }
+        const ExprPtr get_operand() const { return operand_; }
+        const UnaryOp get_op() const  { return op_; }
 };
 
 class AssignNode final : public StatementNode
@@ -321,18 +302,15 @@ public:
         return ctx.assign(dest_->get_name(), expr_->eval(ctx));
     }
 
-    void dump(std::ostream& os) const override {
-        MSG("dumping assign node\n");
-        os << *this;
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
+    void accept(const Visitor& visitor) const override {
         visitor.VisitAssignNode(*this);
     }
 
     public: // getters
-        const VariableNode get_dest() { return dest_; }
-        const ExprPtr get_expr() { return expr_; }
+        const VariableNode* get_dest() const { return dest_; }
+        const ExprPtr get_expr() const { return expr_; }
 
 };
 
@@ -358,18 +336,15 @@ public:
         return result;
     }
 
-    void dump(std::ostream& os) const override {
-        MSG("dumping while node\n");
-        os << *this;
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
+    void accept(const Visitor& visitor) const override {
         visitor.VisitWhileNode(*this);
     }
 
     public: // getters
-        const ExprPtr get_cond() { return cond_; }
-        cons StmtPtr get_scope() {return scope_; }
+        const ExprPtr get_cond() const { return cond_; }
+        const StmtPtr get_scope() const {return scope_; }
 };
 
 using AssignPtr = AssignNode*;
@@ -409,20 +384,17 @@ public:
     }
 
 
-    void dump(std::ostream& os) const override {
-        MSG("dumping for node\n");
-        os << *this;
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
-        visitor->VisitForNode(*this);
+    void accept(const Visitor& visitor) const override {
+        visitor.VisitForNode(*this);
     }
 
     public: // getters
-        const AssingNode get_init() { return init_; }
-        const ExprPtr get_cond() {return cond_;}
-        const AssignPtr get_iter() { return iter_; }
-        const StmtPtr get_body() { return body_; }
+        const AssignPtr get_init() const { return init_; }
+        const ExprPtr get_cond() const { return cond_; }
+        const AssignPtr get_iter() const  { return iter_; }
+        const StmtPtr get_body() const { return body_; }
 };
 
 class IfNode final : public ConditionalStatementNode
@@ -450,20 +422,16 @@ public:
         return 0;
     }
 
-    void dump(std::ostream& os) const override {
-        MSG("dumping if node\n");
-        os << *this;
-        MSG("dumped if node\n");
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
+    void accept(const Visitor& visitor) const override {
         visitor.VisitIfNode(*this);
     }
 
     public: // getters
-        const ExprPtr get_cond() { return cond_; }
-        const StmtPtr get_action() { return action_; }
-        const StmtPtr get_else_action() { return else_action_; }
+        const ExprPtr get_cond() const { return cond_; }
+        const StmtPtr get_action() const { return action_; }
+        const StmtPtr get_else_action() const { return else_action_; }
 };
 
 class PrintNode final : public StatementNode
@@ -485,18 +453,14 @@ public:
         return value;
     }
 
-    void dump(std::ostream& os) const override {
-        MSG("dumping print node\n");
-        os << *this;
-        MSG("dumped print node\n");
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
+    void accept(const Visitor& visitor) const override {
         visitor.VisitPrintNode(*this);
     }
 
     public: // getters
-        const ExprPtr get_expr() { return expr_; }
+        const ExprPtr get_expr() const { return expr_; }
 };
 
 class InNode final : public ExpressionNode
@@ -516,12 +480,9 @@ public:
         return value;
     }
 
-    void dump(std::ostream& os) const override {
-        MSG("dumping in node\n");
-        os << *this;
-    }
+    void dump(std::ostream& os) const override {}
 
-    void accept(Visitor& visitor) const override {
+    void accept(const Visitor& visitor) const override {
         visitor.VisitInNode(*this);
     }
 };
@@ -530,165 +491,7 @@ class VoidNode final : public ExpressionNode
 {
 	int  eval(detail::Context&) const override { return 0; }
     void dump(std::ostream&)    const override {}
-    void accept(Visitor& visitor) const override {}
+    void accept(const Visitor& visitor) const override {}
 };
-
-//     std::ostream& operator<<(std::ostream& os, const ForNode& n)
-//     {
-//         os << SET_NODE << &n
-//         << SET_MRECORD_SHAPE
-//         << SET_LABEL  << "FOR"     << SET_ADR  << &n << END_LABEL
-//         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::WHILE_NODE_COLOR << std::dec
-//         << END_NODE;
-//
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.init_ << std::endl;
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_ << std::endl;
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.iter_ << std::endl;
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.body_ << std::endl;
-//
-//         n.init_->dump(os);
-//         n.cond_->dump(os);
-//         n.iter_->dump(os);
-//         n.body_->dump(os);
-//
-//         return os;
-//     }
-//
-//
-//     std::ostream& operator<<(std::ostream& os, const InNode& n)
-//     {
-//         os << SET_NODE << &n
-//         << SET_MRECORD_SHAPE
-//         << SET_LABEL  << "IN"      << SET_ADR  << &n << END_LABEL
-//         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::PRINT_NODE_COLOR << std::dec
-//         << END_NODE;
-//
-//         return os;
-//     }
-//
-//     std::ostream& operator<<(std::ostream& os, const ConstantNode& n) {
-//         os << SET_NODE << &n
-//         << SET_MRECORD_SHAPE
-//         << SET_LABEL  << n.val_    << SET_ADR  << &n << END_LABEL
-//         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::CONSTANT_NODE_COLOR << std::dec
-//         << END_NODE;
-//
-//         return os;
-//     }
-//
-//     std::ostream& operator<<(std::ostream& os, const VariableNode& n) {
-//         os << SET_NODE << &n
-//         << SET_MRECORD_SHAPE
-//         << SET_LABEL  << n.name_   << SET_ADR  << &n << END_LABEL
-//         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::VARIABLE_NODE_COLOR << std::dec
-//         << END_NODE;
-//
-//         return os;
-//     }
-//
-//
-//     std::ostream& operator<<(std::ostream& os, const BinaryOpNode& n)
-//     {
-//         os << SET_NODE << &n
-//         << SET_MRECORD_SHAPE
-//         << SET_LABEL  << "binary: " << BinaryOpNames[static_cast<std::size_t>(n.op_)]    << SET_ADR << &n << END_LABEL
-//         << SET_FILLED << SET_COLOR  << std::hex << AST::dump_style::BINARYOP_NODE_COLOR << std::dec
-//         << END_NODE;
-//
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.left_  << std::endl;
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.right_ << std::endl;
-//
-//         n.left_ ->dump(os);
-//         n.right_->dump(os);
-//
-//         return os;
-//     }
-//
-//
-//     std::ostream& operator<<(std::ostream& os, const UnaryOpNode& n)
-//     {
-//         os << SET_NODE << &n
-//         << SET_MRECORD_SHAPE
-//         << SET_LABEL  << "unary: " << UnaryOpNames[static_cast<std::size_t>(n.op_)]    << SET_ADR << &n << END_LABEL
-//         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::UNARYOP_NODE_COLOR  << std::dec
-//         << END_NODE;
-//
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.operand_ << std::endl;
-//
-//         n.operand_->dump(os);
-//
-//         return os;
-//     }
-//
-//
-//     std::ostream& operator<<(std::ostream& os, const AssignNode& n)
-//     {
-//         os << SET_NODE << &n
-//         << SET_MRECORD_SHAPE
-//         << SET_LABEL  << "ASSIGN '='" << SET_ADR  << &n << END_LABEL
-//         << SET_FILLED << SET_COLOR    << std::hex << AST::dump_style::ASSIGN_NODE_COLOR << std::dec
-//         << END_NODE;
-//
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_ << std::endl;
-//
-//         n.expr_->dump(os);
-//
-//         return os;
-//     }
-//
-//
-//     std::ostream& operator<<(std::ostream& os, const WhileNode& n)
-//     {
-//         os << SET_NODE << &n
-//         << SET_MRECORD_SHAPE
-//         << SET_LABEL  << "WHILE"   << SET_ADR  << &n << END_LABEL
-//         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::WHILE_NODE_COLOR << std::dec
-//         << END_NODE;
-//
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_  << std::endl;
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.scope_ << std::endl;
-//
-//         n.cond_ ->dump(os);
-//         n.scope_->dump(os);
-//
-//         return os;
-//     }
-//
-//
-//     std::ostream& operator<<(std::ostream& os, const IfNode& n)
-//     {
-//         os << SET_NODE << &n
-//         << SET_MRECORD_SHAPE
-//         << SET_LABEL  << "IF"      << SET_ADR  << &n << END_LABEL
-//         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::IF_NODE_COLOR << std::dec
-//         << END_NODE;
-//
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.cond_        << std::endl;
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.action_      << std::endl;
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.else_action_ << std::endl;
-//
-//         n.cond_  ->dump(os);
-//         n.action_->dump(os);
-//         if (n.else_action_) n.else_action_->dump(os);
-//
-//         return os;
-//     }
-//
-//
-//     std::ostream& operator<<(std::ostream& os, const PrintNode& n)
-//     {
-//         os << SET_NODE << &n
-//         << SET_MRECORD_SHAPE
-//         << SET_LABEL  << "PRINT"   << SET_ADR  << &n << END_LABEL
-//         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::PRINT_NODE_COLOR << std::dec
-//         << END_NODE;
-//
-//         os << SET_NODE << &n << SET_LINK << SET_NODE << n.expr_ << std::endl;
-//
-//         n.expr_->dump(os);
-//
-//         return os;
-//     }
-
 
 } // namespace AST

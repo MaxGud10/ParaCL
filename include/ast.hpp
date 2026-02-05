@@ -28,12 +28,9 @@ public:
         globalScope->eval(ctx);
     }
 
-    void dump(std::ostream& os) {
-        os << "digraph{" << std::endl; // start of dot file
-
-        globalScope->dump(os);
-
-        os << "}"; // end of dot file
+    void dump(std::ostream& os) {}
+    void accept(Visitor& visitor) {
+        visitor.VisitScopeNode(*globalScope);
     }
 };
 

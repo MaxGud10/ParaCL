@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 #include <context.hpp>
-#include <visitor.hpp>
+#include <ivisitor.hpp>
 
 
 namespace AST
@@ -85,7 +85,7 @@ class INode
 public:
     virtual int  eval(detail::Context& ctx) const = 0;
     virtual void dump(std::ostream& os)     const = 0;
-    virtual void accept(Visitor& visitor)   const = 0;
+    virtual void accept(const Visitor& visitor)   const = 0;
 
 
     virtual ~INode() = default;
