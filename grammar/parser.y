@@ -112,6 +112,11 @@
 %%
 
 Program: /* nothing */
+			YYEOF
+			{
+				drv.ast.globalScope =
+					drv.bld.create<AST::ScopeNode>(std::vector<AST::StatementNode*>{});
+			}
 			| Statements YYEOF
 	   		{
 				MSG("Initialising global scope with vector of statements:\n");
@@ -336,7 +341,8 @@ Expr:	BinaryOp
 		{
 			MSG("Moving VarialeNode\n");
 			$$ = $1;
-		};
+		}
+	| Assign { $$ = $1; };
 
 BinaryOp: 	Expr "+" Expr
 			{

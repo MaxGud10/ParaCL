@@ -64,13 +64,14 @@ int main(int argc, char **argv)
         LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
 
         if (drv.ast.globalScope->nstms() > 0)
-          drv.ast.eval();
-        else
-            std::cout << "No statements to execute" << std::endl;
+            drv.ast.eval();
     }
-    else {
+    else
+    {
         std::cerr << "Parsing failed or AST not created" << std::endl;
+        return status != 0 ? status : 1;
     }
+
 
     // handling dump flag
     for (int i = 0; i < argc; ++i)

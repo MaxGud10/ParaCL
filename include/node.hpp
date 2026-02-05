@@ -74,7 +74,7 @@ public:
 		return 0;
     }
 
-    void dump(std::ostream& os) const override {}
+    void dump(std::ostream&) const override {}
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitScopeNode(*this);
@@ -88,8 +88,8 @@ public:
 	size_t nstms() const { return children_.size(); }
 
 
-    public: // getters
-        const std::vector<StmtPtr> &get_children() const { return children_; }
+public: 
+    const std::vector<StmtPtr> &get_children() const { return children_; }
 };
 
 class ConstantNode final : public ExpressionNode
@@ -113,7 +113,7 @@ public:
         visitor.VisitConstantNode(*this);
     }
 
-    public: // getters
+public: // getters
     int get_val() const {
         return val_;
     }
@@ -149,8 +149,8 @@ public:
         visitor.VisitVariableNode(*this);
     }
 
-    public: // getters
-        std::string_view get_name() const { return name_; }
+public: // getters
+    std::string_view get_name() const { return name_; }
 };
 
 class BinaryOpNode final : public ExpressionNode
@@ -242,10 +242,10 @@ public:
         visitor.VisitBinaryOpNode(*this);
     }
 
-    public: // getters
-        const ExprPtr get_left() const    { return left_; }
-        const ExprPtr get_right() const  { return right_; }
-        const BinaryOp get_op() const     { return op_; }
+public: // getters
+    const ExprPtr  get_left()  const { return left_;  }
+    const ExprPtr  get_right() const { return right_; }
+    const BinaryOp get_op()    const { return op_;    }
 };
 
 class UnaryOpNode final : public ExpressionNode
@@ -281,12 +281,12 @@ public:
         visitor.VisitUnaryOpNode(*this);
     }
 
-    public: // getters
-        const ExprPtr get_operand() const { return operand_; }
-        const UnaryOp get_op() const  { return op_; }
+public: // getters
+    const ExprPtr get_operand() const { return operand_; }
+    const UnaryOp get_op()      const { return op_;      }  
 };
 
-class AssignNode final : public StatementNode
+class AssignNode final : public ExpressionNode
 {
 private:
     VariableNode* dest_ = nullptr;
@@ -308,9 +308,9 @@ public:
         visitor.VisitAssignNode(*this);
     }
 
-    public: // getters
-        const VariableNode* get_dest() const { return dest_; }
-        const ExprPtr get_expr() const { return expr_; }
+public: // getters
+    const VariableNode* get_dest() const { return dest_; }
+    const ExprPtr       get_expr() const { return expr_; }
 
 };
 
@@ -342,9 +342,9 @@ public:
         visitor.VisitWhileNode(*this);
     }
 
-    public: // getters
-        const ExprPtr get_cond() const { return cond_; }
-        const StmtPtr get_scope() const {return scope_; }
+public: // getters
+    const ExprPtr get_cond()  const { return cond_; }
+    const StmtPtr get_scope() const {return scope_; }
 };
 
 using AssignPtr = AssignNode*;
@@ -390,11 +390,11 @@ public:
         visitor.VisitForNode(*this);
     }
 
-    public: // getters
-        const AssignPtr get_init() const { return init_; }
-        const ExprPtr get_cond() const { return cond_; }
-        const AssignPtr get_iter() const  { return iter_; }
-        const StmtPtr get_body() const { return body_; }
+public: // getters
+    const AssignPtr get_init() const { return init_; }
+    const ExprPtr   get_cond() const { return cond_; }
+    const AssignPtr get_iter() const { return iter_; }
+    const StmtPtr   get_body() const { return body_; }
 };
 
 class IfNode final : public ConditionalStatementNode
@@ -428,10 +428,10 @@ public:
         visitor.VisitIfNode(*this);
     }
 
-    public: // getters
-        const ExprPtr get_cond() const { return cond_; }
-        const StmtPtr get_action() const { return action_; }
-        const StmtPtr get_else_action() const { return else_action_; }
+public: // getters
+    const ExprPtr get_cond()        const { return cond_;        }
+    const StmtPtr get_action()      const { return action_;      }
+    const StmtPtr get_else_action() const { return else_action_; }
 };
 
 class PrintNode final : public StatementNode
@@ -459,8 +459,8 @@ public:
         visitor.VisitPrintNode(*this);
     }
 
-    public: // getters
-        const ExprPtr get_expr() const { return expr_; }
+public: // getters
+    const ExprPtr get_expr() const { return expr_; }
 };
 
 class InNode final : public ExpressionNode
