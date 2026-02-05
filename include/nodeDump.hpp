@@ -26,6 +26,7 @@ namespace AST::dump_style
     inline constexpr int PRINT_NODE_COLOR    = 0xFFB0B0;
     inline constexpr int IN_NODE_COLOR       = 0xAFEEEE;
     inline constexpr int CONSTANT_NODE_COLOR = 0x98FB98;
+    inline constexpr int SCOPE_NODE_COLOR    = 0xADEEEB;
 }
 
 

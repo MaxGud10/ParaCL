@@ -85,7 +85,6 @@ int main(int argc, char **argv)
                 DotPrinter printer(outFile);
                 std::cout << "AAAAA" << std::endl;
                 drv.ast.accept(printer);
-                // drv.ast.dump(outFile);
                 std::cout << "dumped" << std::endl;
                 // outFile.close();
                 return status;

@@ -18,8 +18,15 @@ class DotPrinter : public Visitor {
     }
 
     void VisitScopeNode(const AST::ScopeNode& n) const override {
+        os_ << SET_NODE << &n
+        << SET_MRECORD_SHAPE
+        << SET_LABEL  << "SCOPE" << SET_ADR  << &n << END_LABEL
+        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::SCOPE_NODE_COLOR << std::dec
+        << END_NODE;
+
         const auto& children = n.get_children();
         for (const auto &child : children) {
+            os_ << SET_NODE << &n << SET_LINK << SET_NODE << child << std::endl;
             child->accept(*this);
         }
     }
@@ -39,8 +46,10 @@ class DotPrinter : public Visitor {
         << SET_FILLED << SET_COLOR    << std::hex << AST::dump_style::ASSIGN_NODE_COLOR << std::dec
         << END_NODE;
 
+        os_ << SET_NODE << &n << SET_LINK << SET_NODE << n.get_dest() << std::endl;
         os_ << SET_NODE << &n << SET_LINK << SET_NODE << n.get_expr() << std::endl;
 
+        n.get_dest()->accept(*this);
         n.get_expr()->accept(*this);
     }
 
