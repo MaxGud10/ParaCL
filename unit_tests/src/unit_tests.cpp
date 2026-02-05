@@ -85,6 +85,7 @@ TEST(common, slash_assign_basic)   { test_utils::run_test("/common/slash_assign_
 
 TEST(common, assign_combo)         { test_utils::run_test("/common/assign_combo"); }
 
+TEST(common, chain)         { test_utils::run_test("/common/chain"); }
 
 TEST(ASTTestBase, CreateConstant)
 {
