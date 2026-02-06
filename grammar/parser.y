@@ -94,18 +94,18 @@
 %right "while"
 %right "for"
 
-%left "="
+%right "=" "+=" "-=" "*=" "/=" "%="
 
 %left "||"
 %left "&&"
 %left "|"
 %left "&"
 
-%left "==" "!="
-%left "<" "<=" ">" ">="
+%nonassoc "==" "!="
+%nonassoc "<" "<=" ">" ">="
 
 %left "+" "-"
-%left "*" "/"
+%left "*" "/" "%"
 
 %right UMINUS NOT
 
@@ -161,13 +161,6 @@ Statement:
 		| 	Scope
 		 	{
 				LOG("It's Scope. Moving from concrete rule: {}\n",
-					static_cast<const void*>($$));
-
-				$$ = $1;
-			}
-		| 	Assign ";"
-		 	{
-				LOG("It's Assign. Moving from concrete rule: {}\n",
 					static_cast<const void*>($$));
 
 				$$ = $1;
