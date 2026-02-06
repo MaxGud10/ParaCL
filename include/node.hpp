@@ -74,7 +74,7 @@ public:
 		return 0;
     }
 
-    void dump(std::ostream&) const override {}
+
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitScopeNode(*this);
@@ -88,7 +88,7 @@ public:
 	size_t nstms() const { return children_.size(); }
 
 
-public: 
+public:
     const std::vector<StmtPtr> &get_children() const { return children_; }
 };
 
@@ -107,7 +107,6 @@ public:
         return val_;
     }
 
-    void dump(std::ostream& os) const override {}
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitConstantNode(*this);
@@ -143,7 +142,7 @@ public:
 		throw std::runtime_error("Undeclared variable: " + std::string(name_) + "\n");
     }
 
-    void dump(std::ostream& os) const override {}
+
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitVariableNode(*this);
@@ -236,7 +235,7 @@ public:
         return result;
     }
 
-    void dump(std::ostream& os) const override {}
+
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitBinaryOpNode(*this);
@@ -275,7 +274,7 @@ public:
         }
     }
 
-    void dump(std::ostream& os) const override {}
+
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitUnaryOpNode(*this);
@@ -283,7 +282,7 @@ public:
 
 public: // getters
     const ExprPtr get_operand() const { return operand_; }
-    const UnaryOp get_op()      const { return op_;      }  
+    const UnaryOp get_op()      const { return op_;      }
 };
 
 class AssignNode final : public ExpressionNode
@@ -302,7 +301,7 @@ public:
         return ctx.assign(dest_->get_name(), expr_->eval(ctx));
     }
 
-    void dump(std::ostream& os) const override {}
+
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitAssignNode(*this);
@@ -336,7 +335,7 @@ public:
         return result;
     }
 
-    void dump(std::ostream& os) const override {}
+
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitWhileNode(*this);
@@ -384,7 +383,7 @@ public:
     }
 
 
-    void dump(std::ostream& os) const override {}
+
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitForNode(*this);
@@ -422,7 +421,7 @@ public:
         return 0;
     }
 
-    void dump(std::ostream& os) const override {}
+
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitIfNode(*this);
@@ -453,7 +452,7 @@ public:
         return value;
     }
 
-    void dump(std::ostream& os) const override {}
+
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitPrintNode(*this);
@@ -480,7 +479,7 @@ public:
         return value;
     }
 
-    void dump(std::ostream& os) const override {}
+
 
     void accept(const Visitor& visitor) const override {
         visitor.VisitInNode(*this);
@@ -490,7 +489,6 @@ public:
 class VoidNode final : public ExpressionNode
 {
 	int  eval(detail::Context&) const override { return 0; }
-    void dump(std::ostream&)    const override {}
     void accept(const Visitor& visitor) const override {}
 };
 
