@@ -17,10 +17,10 @@ class DotPrinter : public Visitor {
         os_ << "}" << std::endl;
     }
 
-    void VisitScopeNode(const AST::ScopeNode& n) const override {
+    void Visit(const AST::ScopeNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
-        << SET_LABEL  << "SCOPE" << SET_ADR  << &n << END_LABEL
+        << SET_LABEL  << "SCOPE"   << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::SCOPE_NODE_COLOR << std::dec
         << END_NODE;
 
@@ -31,15 +31,15 @@ class DotPrinter : public Visitor {
         }
     }
 
-    void VisitConstantNode(const AST::ConstantNode& n) const override {
+    void Visit(const AST::ConstantNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << n.get_val() << SET_ADR  << &n << END_LABEL
-        << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::CONSTANT_NODE_COLOR << std::dec
+        << SET_FILLED << SET_COLOR   << std::hex << AST::dump_style::CONSTANT_NODE_COLOR << std::dec
         << END_NODE;
     }
 
-    void VisitAssignNode(const AST::AssignNode& n) const override {
+    void Visit(const AST::AssignNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "ASSIGN '='" << SET_ADR  << &n << END_LABEL
@@ -53,7 +53,7 @@ class DotPrinter : public Visitor {
         n.get_expr()->accept(*this);
     }
 
-    void VisitWhileNode(const AST::WhileNode& n) const override {
+    void Visit(const AST::WhileNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "WHILE"   << SET_ADR  << &n << END_LABEL
@@ -65,10 +65,9 @@ class DotPrinter : public Visitor {
 
         n.get_cond()->accept(*this);
         n.get_scope()->accept(*this);
-
     }
 
-    void VisitIfNode(const AST::IfNode& n) const override {
+    void Visit(const AST::IfNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "IF"      << SET_ADR  << &n << END_LABEL
@@ -82,10 +81,9 @@ class DotPrinter : public Visitor {
         n.get_cond()->accept(*this);
         n.get_action()->accept(*this);
         if (n.get_else_action()) n.get_else_action()->accept(*this);
-
     }
 
-    void VisitPrintNode(const AST::PrintNode& n) const override {
+    void Visit(const AST::PrintNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "PRINT"   << SET_ADR  << &n << END_LABEL
@@ -97,25 +95,23 @@ class DotPrinter : public Visitor {
         n.get_expr()->accept(*this);
     }
 
-    void VisitInNode(const AST::InNode& n) const override {
+    void Visit(const AST::InNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "IN"      << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::PRINT_NODE_COLOR << std::dec
         << END_NODE;
-
     }
 
-    void VisitVariableNode(const AST::VariableNode& n) const override {
+    void Visit(const AST::VariableNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << n.get_name()   << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::VARIABLE_NODE_COLOR << std::dec
         << END_NODE;
-
     }
 
-    void VisitBinaryOpNode(const AST::BinaryOpNode& n) const override {
+    void Visit(const AST::BinaryOpNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "binary: " << AST::BinaryOpNames[static_cast<std::size_t>(n.get_op())]    << SET_ADR << &n << END_LABEL
@@ -127,10 +123,9 @@ class DotPrinter : public Visitor {
 
         n.get_left()->accept(*this);
         n.get_right()->accept(*this);
-
     }
 
-    void VisitUnaryOpNode(const AST::UnaryOpNode& n) const override {
+    void Visit(const AST::UnaryOpNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "unary: " << AST::UnaryOpNames[static_cast<std::size_t>(n.get_op())]    << SET_ADR << &n << END_LABEL
@@ -140,10 +135,9 @@ class DotPrinter : public Visitor {
         os_ << SET_NODE << &n << SET_LINK << SET_NODE << n.get_operand() << std::endl;
 
         n.get_operand()->accept(*this);
-
     }
 
-    void VisitForNode(const AST::ForNode& n) const override {
+    void Visit(const AST::ForNode& n) const override {
         os_ << SET_NODE << &n
         << SET_MRECORD_SHAPE
         << SET_LABEL  << "FOR"     << SET_ADR  << &n << END_LABEL

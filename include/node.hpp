@@ -14,7 +14,6 @@
 #include "detail/ivisitor.hpp"
 #include "inode.hpp"
 #include "log.h"
-#include "nodeDump.hpp"
 
 
 namespace AST
@@ -74,10 +73,8 @@ public:
 		return 0;
     }
 
-
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitScopeNode(*this);
+        visitor.Visit(*this);
     }
 
     void push_child(StmtPtr&& stmt)
@@ -86,7 +83,6 @@ public:
     }
 
 	size_t nstms() const { return children_.size(); }
-
 
 public:
     const std::vector<StmtPtr> &get_children() const { return children_; }
@@ -107,17 +103,14 @@ public:
         return val_;
     }
 
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitConstantNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
     int get_val() const {
         return val_;
     }
-
-
 
 };
 
@@ -142,10 +135,8 @@ public:
 		throw std::runtime_error("Undeclared variable: " + std::string(name_) + "\n");
     }
 
-
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitVariableNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -235,10 +226,8 @@ public:
         return result;
     }
 
-
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitBinaryOpNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -274,10 +263,8 @@ public:
         }
     }
 
-
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitUnaryOpNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -301,16 +288,13 @@ public:
         return ctx.assign(dest_->get_name(), expr_->eval(ctx));
     }
 
-
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitAssignNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
     const VariableNode* get_dest() const { return dest_; }
     const ExprPtr       get_expr() const { return expr_; }
-
 };
 
 class WhileNode final : public ConditionalStatementNode
@@ -335,10 +319,8 @@ public:
         return result;
     }
 
-
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitWhileNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -382,11 +364,8 @@ public:
         return result;
     }
 
-
-
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitForNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -409,7 +388,6 @@ public:
           action_     (action),
           else_action_(else_action) {}
 
-
     int eval(detail::Context& ctx) const override
     {
         if (cond_->eval(ctx))
@@ -421,10 +399,8 @@ public:
         return 0;
     }
 
-
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitIfNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -452,10 +428,8 @@ public:
         return value;
     }
 
-
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitPrintNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -479,17 +453,15 @@ public:
         return value;
     }
 
-
-
     void accept(const Visitor& visitor) const override {
-        visitor.VisitInNode(*this);
+        visitor.Visit(*this);
     }
 };
 
 class VoidNode final : public ExpressionNode
 {
 	int  eval(detail::Context&) const override { return 0; }
-    void accept(const Visitor& visitor) const override {}
+    void accept(const Visitor&) const override {}
 };
 
 } // namespace AST

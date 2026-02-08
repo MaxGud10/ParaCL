@@ -28,9 +28,9 @@ public:
         globalScope->eval(ctx);
     }
 
-    void dump(std::ostream& os) {}
+    void dump(std::ostream&) {}
     void accept(Visitor& visitor) {
-        visitor.VisitScopeNode(*globalScope);
+        visitor.Visit(*globalScope);
     }
 };
 
