@@ -82,8 +82,8 @@ inline constexpr std::array<std::string_view, numUnaryOp> UnaryOpNames =
 class INode
 {
 public:
+
     virtual int  eval(detail::Context& ctx)     const = 0;
-    virtual void dump(std::ostream& os)         const = 0;
     virtual void accept(const Visitor& visitor) const = 0;
 
     virtual ~INode() = default;
