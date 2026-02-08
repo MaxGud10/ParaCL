@@ -30,7 +30,7 @@ public:
 
     void dump(std::ostream& os) {}
     void accept(Visitor& visitor) {
-        visitor.VisitScopeNode(*globalScope);
+        visitor.Visit(*globalScope);
     }
 };
 

@@ -243,7 +243,7 @@ Assign: Variable "=" Expr
 		{
 			$$ = drv.bld.create<AST::AssignNode>($1, $3);
 			LOG("Initialising assignment: {}\n", static_cast<const void*>($$));
-		};
+		}
     |   Variable "+=" Expr
         {
             auto oldX = drv.bld.create<AST::VariableNode>(drv.bld.intern($1->get_name()));

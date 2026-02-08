@@ -14,7 +14,6 @@
 #include "detail/ivisitor.hpp"
 #include "inode.hpp"
 #include "log.h"
-#include "nodeDump.hpp"
 
 
 namespace AST
@@ -77,7 +76,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitScopeNode(*this);
+        visitor.Visit(*this);
     }
 
     void push_child(StmtPtr&& stmt)
@@ -109,7 +108,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitConstantNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -145,7 +144,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitVariableNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -238,7 +237,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitBinaryOpNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -277,7 +276,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitUnaryOpNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -304,7 +303,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitAssignNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -338,7 +337,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitWhileNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -386,7 +385,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitForNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -424,7 +423,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitIfNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -455,7 +454,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitPrintNode(*this);
+        visitor.Visit(*this);
     }
 
 public: // getters
@@ -482,7 +481,7 @@ public:
 
 
     void accept(const Visitor& visitor) const override {
-        visitor.VisitInNode(*this);
+        visitor.Visit(*this);
     }
 };
 
