@@ -21,7 +21,6 @@ using VarIterator = std::unordered_map<std::string, int>::iterator;
 template<class T>
 using ObserverPtr = T*;
 
-// inline constexpr std::size_t numBinaryOp = 15;
 enum class BinaryOp : std::uint8_t
 {
     ADD = 0,
@@ -83,10 +82,9 @@ inline constexpr std::array<std::string_view, numUnaryOp> UnaryOpNames =
 class INode
 {
 public:
-    virtual int  eval(detail::Context& ctx) const = 0;
-    virtual void dump(std::ostream& os)     const = 0;
-    virtual void accept(const Visitor& visitor)   const = 0;
-
+    virtual int  eval(detail::Context& ctx)     const = 0;
+    virtual void dump(std::ostream& os)         const = 0;
+    virtual void accept(const Visitor& visitor) const = 0;
 
     virtual ~INode() = default;
 };

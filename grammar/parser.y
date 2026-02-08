@@ -119,14 +119,7 @@ Program: /* nothing */
 			}
 			| Statements YYEOF
 	   		{
-				MSG("Initialising global scope with vector of statements:\n");
-				for ([[maybe_unused]] const auto& stm : drv.stm_table[drv.cur_scope_id])
-				{
-					LOG("{}\n", static_cast<const void*>(stm));
-				}
-
-				drv.ast.globalScope =
-                    drv.bld.create<AST::ScopeNode>(std::move(drv.stm_table[drv.cur_scope_id]));
+				drv.build_global_scope();
 			};
 
 Statements: Statement
@@ -134,14 +127,14 @@ Statements: Statement
 				LOG("Pushing statement : {}\n",
 					static_cast<const void*>($1));
 
-				drv.stm_table[drv.cur_scope_id].push_back($1);
+				drv.push_statement($1);
 			}
 		|	Statements Statement
 		  	{
 				LOG("Pushing statement : {}\n",
 					static_cast<const void*>($2));
 
-				drv.stm_table[drv.cur_scope_id].push_back($2);
+				drv.push_statement($2);
 			};
 
 Statement:
@@ -150,7 +143,6 @@ Statement:
 				MSG("Void statement\n");
 				$$ = drv.bld.create<AST::VoidNode>();
 			}
-
 		|	Expr ";"
 			{
 				LOG("It's Expr. Moving from concrete rule: {}\n",
@@ -197,39 +189,18 @@ Statement:
 Scope: 	StartScope Statements EndScope
 		{
 			MSG("Initialising scope with vector of statements:\n");
-			for ([[maybe_unused]] const auto& stm : drv.stm_table[drv.cur_scope_id])
-			{
-				LOG("{}\n", static_cast<const void*>(stm));
-			}
-
-			$$ = drv.bld.create<AST::ScopeNode>(std::move(drv.stm_table[drv.cur_scope_id]));
-
-			MSG("Scope end.\n");
-
-			--drv.cur_scope_id;
-
-			LOG("drv.cur_scope_id is now {}\n", drv.cur_scope_id);
-
-			drv.stm_table.pop_back();
+			$$ = drv.exit_scope_node();
 		}
 		| StartScope EndScope
 		{
-              MSG("Initialising empty scope\n");
-              $$ = drv.bld.create<AST::ScopeNode>(std::vector<AST::StatementNode*>{});
-              --drv.cur_scope_id;
-              LOG("drv.cur_scope_id is now {}\n", drv.cur_scope_id);
-              drv.stm_table.pop_back();
+            MSG("Initialising empty scope\n");
+			$$ = drv.exit_scope_node();
 		};
 
 StartScope: "{"
 			{
 				MSG("Scope start.\n");
-
-				++drv.cur_scope_id;
-
-				LOG("drv.cur_scope_id is now {}\n", drv.cur_scope_id);
-
-				drv.stm_table.resize(drv.stm_table.size() + 1);
+				drv.enter_scope();
 			};
 
 EndScope: 	"}"

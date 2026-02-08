@@ -29,7 +29,7 @@ public: /* members */
 	AST::AST		                       ast;
 	AST::NodeBuilder                       bld;
 	std::vector<std::vector<AST::StmtPtr>> stm_table;
-	size_t                                 cur_scope_id = 0;
+	// size_t                                 cur_scope_id = 0;
 
 public:
   	Driver(std::ostream& out = std::cout) :	ast(out)
@@ -70,8 +70,39 @@ public:
 		}
 	}
 
+	std::vector<AST::StmtPtr>& cur_stmts()
+	{
+		return stm_table.back();
+	}
+
+	void push_statement(AST::StmtPtr stm)
+	{
+		cur_stmts().push_back(stm);
+	}
+
+	void enter_scope()
+	{
+		stm_table.emplace_back();
+	}
+
+	AST::ScopeNode* exit_scope_node()
+	{
+		if (stm_table.size() <= 1)
+			throw std::runtime_error("exit_scope_node() called at global scope");
+
+		auto stms = std::move(stm_table.back());
+		stm_table.pop_back();
+
+		return bld.create<AST::ScopeNode>(std::move(stms));
+	}
+
+	void build_global_scope()
+	{
+		ast.globalScope = bld.create<AST::ScopeNode>(std::move(stm_table.front()));
+	}
+
 	void scan_end ()
-	{ 
+	{
 		fclose (yyin);
 	}
 };
