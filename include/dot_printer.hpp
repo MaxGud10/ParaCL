@@ -65,7 +65,6 @@ class DotPrinter : public Visitor {
 
         n.get_cond()->accept(*this);
         n.get_scope()->accept(*this);
-
     }
 
     void Visit(const AST::IfNode& n) const override {
@@ -82,7 +81,6 @@ class DotPrinter : public Visitor {
         n.get_cond()->accept(*this);
         n.get_action()->accept(*this);
         if (n.get_else_action()) n.get_else_action()->accept(*this);
-
     }
 
     void Visit(const AST::PrintNode& n) const override {
@@ -103,7 +101,6 @@ class DotPrinter : public Visitor {
         << SET_LABEL  << "IN"      << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::PRINT_NODE_COLOR << std::dec
         << END_NODE;
-
     }
 
     void Visit(const AST::VariableNode& n) const override {
@@ -112,7 +109,6 @@ class DotPrinter : public Visitor {
         << SET_LABEL  << n.get_name()   << SET_ADR  << &n << END_LABEL
         << SET_FILLED << SET_COLOR << std::hex << AST::dump_style::VARIABLE_NODE_COLOR << std::dec
         << END_NODE;
-
     }
 
     void Visit(const AST::BinaryOpNode& n) const override {
@@ -127,7 +123,6 @@ class DotPrinter : public Visitor {
 
         n.get_left()->accept(*this);
         n.get_right()->accept(*this);
-
     }
 
     void Visit(const AST::UnaryOpNode& n) const override {
@@ -140,7 +135,6 @@ class DotPrinter : public Visitor {
         os_ << SET_NODE << &n << SET_LINK << SET_NODE << n.get_operand() << std::endl;
 
         n.get_operand()->accept(*this);
-
     }
 
     void Visit(const AST::ForNode& n) const override {

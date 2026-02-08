@@ -73,8 +73,6 @@ public:
 		return 0;
     }
 
-
-
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
     }
@@ -85,7 +83,6 @@ public:
     }
 
 	size_t nstms() const { return children_.size(); }
-
 
 public:
     const std::vector<StmtPtr> &get_children() const { return children_; }
@@ -106,7 +103,6 @@ public:
         return val_;
     }
 
-
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
     }
@@ -115,8 +111,6 @@ public: // getters
     int get_val() const {
         return val_;
     }
-
-
 
 };
 
@@ -140,8 +134,6 @@ public:
 
 		throw std::runtime_error("Undeclared variable: " + std::string(name_) + "\n");
     }
-
-
 
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
@@ -234,8 +226,6 @@ public:
         return result;
     }
 
-
-
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
     }
@@ -273,8 +263,6 @@ public:
         }
     }
 
-
-
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
     }
@@ -300,8 +288,6 @@ public:
         return ctx.assign(dest_->get_name(), expr_->eval(ctx));
     }
 
-
-
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
     }
@@ -309,7 +295,6 @@ public:
 public: // getters
     const VariableNode* get_dest() const { return dest_; }
     const ExprPtr       get_expr() const { return expr_; }
-
 };
 
 class WhileNode final : public ConditionalStatementNode
@@ -333,8 +318,6 @@ public:
 
         return result;
     }
-
-
 
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
@@ -381,9 +364,6 @@ public:
         return result;
     }
 
-
-
-
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
     }
@@ -408,7 +388,6 @@ public:
           action_     (action),
           else_action_(else_action) {}
 
-
     int eval(detail::Context& ctx) const override
     {
         if (cond_->eval(ctx))
@@ -419,8 +398,6 @@ public:
 
         return 0;
     }
-
-
 
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
@@ -451,8 +428,6 @@ public:
         return value;
     }
 
-
-
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
     }
@@ -478,8 +453,6 @@ public:
         return value;
     }
 
-
-
     void accept(const Visitor& visitor) const override {
         visitor.Visit(*this);
     }
@@ -488,7 +461,7 @@ public:
 class VoidNode final : public ExpressionNode
 {
 	int  eval(detail::Context&) const override { return 0; }
-    void accept(const Visitor& visitor) const override {}
+    void accept(const Visitor&) const override {}
 };
 
 } // namespace AST
