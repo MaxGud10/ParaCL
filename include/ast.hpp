@@ -22,16 +22,11 @@ private:
 public:
 	AST(std::ostream& out = std::cout) : ctx(out) {}
 
-    void eval()
-    {
-		MSG("Evaluating global scope\n");
-        globalScope->eval(ctx);
-    }
-
-    void dump(std::ostream&) {}
     void accept(Visitor& visitor) {
         visitor.Visit(*globalScope);
     }
+
+    detail::Context& getCtx() { return ctx; }
 };
 
 } // namespace AST

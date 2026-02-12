@@ -9,7 +9,6 @@
 #include <context.hpp>
 #include <ivisitor.hpp>
 
-
 namespace AST
 {
 
@@ -79,15 +78,14 @@ inline constexpr std::array<std::string_view, numUnaryOp> UnaryOpNames =
     "NOT"
 }};
 
+
 class INode
 {
 public:
-
-    virtual int  eval(detail::Context& ctx)     const = 0;
+    virtual void accept(Visitor& visitor) = 0;
     virtual void accept(const Visitor& visitor) const = 0;
-
     virtual ~INode() = default;
+
 };
 
 } // namespace AST
-

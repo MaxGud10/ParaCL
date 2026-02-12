@@ -2,6 +2,7 @@
 
 #include "driver.hpp"
 #include "log.h"
+#include "tree_traverse.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -22,9 +23,11 @@ std::string get_result(std::string_view file_name)
 
     Driver drv(result);
 
+
     status = drv.parse(std::string(file_name));
 
-    drv.ast.eval();
+    TreeTraverse traverse(drv.ast.getCtx());
+    drv.ast.accept(traverse);
 
     EXPECT_EQ(status, 0);
 

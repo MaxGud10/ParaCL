@@ -8,6 +8,7 @@
 #include "log.h"
 #include "inode.hpp"
 #include "dot_printer.hpp"
+#include "tree_traverse.hpp"
 
 constexpr std::string_view DUMP_DIR = "./dumps/";
 constexpr std::string_view DOT_DIR  = "dot/";
@@ -59,12 +60,14 @@ int main(int argc, char **argv)
         }
     }
 
+    TreeTraverse traverse(drv.ast.getCtx());
+
     if (status == 0 && drv.ast.globalScope != nullptr)
     {
         LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
 
         if (drv.ast.globalScope->nstms() > 0)
-            drv.ast.eval();
+            drv.ast.accept(traverse);
     }
     else
     {
