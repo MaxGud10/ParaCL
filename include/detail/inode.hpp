@@ -83,9 +83,8 @@ class INode
 {
 public:
 
-    virtual int  eval(detail::Context& ctx)     const = 0;
+    virtual void accept(Visitor& visitor) = 0;
     virtual void accept(const Visitor& visitor) const = 0;
-
     virtual ~INode() = default;
 };
 
