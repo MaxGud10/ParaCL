@@ -6,6 +6,7 @@
 #include "node.hpp"
 #include "ast.hpp"
 #include "test_utils.hpp"   // for run_test
+#include "tree_traverse.hpp"
 
 class ASTTestBaseBase : public ::testing::Test
 {
@@ -110,7 +111,8 @@ TEST(ASTTestBase, CreateBinaryOpADD)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+
+    int result = TestUtils::evaluate(*binOpNode, ctx);
 
     EXPECT_EQ(result, 1007);
 }
@@ -124,7 +126,8 @@ TEST(ASTTestBase, CreateBinaryOpSUB)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+
+    int result = TestUtils::evaluate(*binOpNode, ctx);
     EXPECT_EQ(result, 993);
 }
 
@@ -137,7 +140,7 @@ TEST(ASTTestBase, CreateBinaryOpMUL)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*binOpNode, ctx);
     EXPECT_EQ(result, 45);
 }
 
@@ -150,7 +153,7 @@ TEST(ASTTestBase, CreateBinaryOpDIV)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*binOpNode, ctx);
     EXPECT_EQ(result, 7);
 }
 
@@ -163,7 +166,8 @@ TEST(ASTTestBase, CreateBinaryOpDIVByZero)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    EXPECT_THROW(binOpNode->eval(ctx), std::runtime_error);
+
+    EXPECT_THROW(TestUtils::evaluate(*binOpNode, ctx), std::runtime_error);
 }
 
 TEST(ASTTestBase, CreateBinaryOpMOD)
@@ -175,7 +179,7 @@ TEST(ASTTestBase, CreateBinaryOpMOD)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*binOpNode, ctx);
     EXPECT_EQ(result, 1);
 }
 
@@ -189,7 +193,7 @@ TEST(ASTTestBase, CreateBinaryOpAND)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*binOpNode, ctx);
 
     EXPECT_EQ(result, 0);
 }
@@ -203,7 +207,7 @@ TEST(ASTTestBase, CreateBinaryOpOR)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*binOpNode, ctx);
     EXPECT_EQ(result, 1);
 }
 
@@ -216,7 +220,7 @@ TEST(ASTTestBase, CreateBinaryOpLESS)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*binOpNode, ctx);
     EXPECT_EQ(result, 1);
 }
 
@@ -229,7 +233,7 @@ TEST(ASTTestBase, CreateBinaryOpLESSorEQUAL)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*binOpNode, ctx);
     EXPECT_EQ(result, 1);
 }
 
@@ -242,7 +246,7 @@ TEST(ASTTestBase, CreateBinaryOpGREATER)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*binOpNode, ctx);
     EXPECT_EQ(result, 1);
 }
 
@@ -255,7 +259,7 @@ TEST(ASTTestBase, CreateBinaryOpGREATERorEQUAL)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*binOpNode, ctx);
     EXPECT_EQ(result, 1);
 }
 
@@ -268,7 +272,7 @@ TEST(ASTTestBase, CreateBinaryOpEQ)
     ASSERT_NE(binOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = binOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*binOpNode, ctx);
     EXPECT_EQ(result, 1);
 }
 
@@ -280,7 +284,7 @@ TEST(ASTTestBase, CreateUnaryOpNEG)
     ASSERT_NE(unaryOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = unaryOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*unaryOpNode, ctx);
     EXPECT_EQ(result, 42);
 }
 
@@ -292,7 +296,7 @@ TEST(ASTTestBase, CreateUnaryOpNOT)
     ASSERT_NE(unaryOpNode, nullptr);
 
     AST::detail::Context ctx;
-    int result = unaryOpNode->eval(ctx);
+    int result = TestUtils::evaluate(*unaryOpNode, ctx);
     EXPECT_EQ(result, 1);
 }
 
@@ -308,7 +312,8 @@ TEST(ASTTestBase, CreateAssignmentNode)
     ctx.varTables_.emplace_back();
     ctx.curScope_ = 0;
 
-    int result = assignmentNode->eval(ctx);
+
+    int result = TestUtils::evaluate(*assignmentNode, ctx);
 
     EXPECT_EQ(result, 42);
 }
@@ -329,7 +334,8 @@ TEST(ASTTestBase, WhileNode_ConditionTrue)
     ctx.curScope_ = 0;
 
     // Evaluate the while loop
-    whileNode->eval(ctx);
+
+    TestUtils::evaluate(*whileNode, ctx);
 
     // After the loop, x should be 10
     EXPECT_EQ(ctx.varTables_[0]["x"], 10);
@@ -352,7 +358,7 @@ TEST(ASTTestBase, IfNode_TrueCondition)
     ctx.curScope_ = 0;
 
     // Evaluate the if statement
-    ifNode->eval(ctx);
+    TestUtils::evaluate(*ifNode, ctx);
 
     // After the if statement, y should be 20
     EXPECT_EQ(ctx.varTables_[0]["y"], 20);
@@ -375,7 +381,7 @@ TEST(ASTTestBase, IfNode_FalseCondition)
     ctx.curScope_ = 0;
 
     // Evaluate the if statement
-    ifNode->eval(ctx);
+    TestUtils::evaluate(*ifNode, ctx);
 
     // After the if statement, y should not be assigned, it should not exist in the context
     EXPECT_EQ(ctx.varTables_[0].count("y"), 0);
@@ -397,7 +403,7 @@ TEST(ASTTestBase, PrintNode) {
     ctx.curScope_ = 0;
 
     // Evaluate the print statement
-    printNode->eval(ctx);
+    TestUtils::evaluate(*printNode, ctx);
 
     // Check that the output was correct
     EXPECT_EQ(ss.str(), "42\n");
@@ -421,7 +427,7 @@ TEST(ASTTestBase, InNode) // TODO
     ctx.varTables_.emplace_back();
     ctx.curScope_ = 0;
 
-    int result = assignmentNode->eval(ctx);
+    int result = TestUtils::evaluate(*assignmentNode, ctx);
 
     EXPECT_EQ(result, 42);
 }
@@ -444,8 +450,7 @@ TEST(ASTTestBase, ForNode_SimpleCount)
     ctx.varTables_.emplace_back();
     ctx.varTables_[0]["y"] = 0;
     ctx.curScope_ = 0;
-
-    forNode->eval(ctx);
+    TestUtils::evaluate(*forNode, ctx);
 
     EXPECT_EQ(ctx.varTables_[0]["y"], 3);
 }
@@ -457,28 +462,34 @@ TEST(ASTTestBase, BinaryOpANDTruthTable)
         auto rhs = CONST(0);
         auto node = binary_op(lhs, AST::BinaryOp::AND, rhs);
         AST::detail::Context ctx;
-        EXPECT_EQ(node->eval(ctx), 0);
+
+        int result = TestUtils::evaluate(*node, ctx);
+        EXPECT_EQ(result, 0);
     }
     {
         auto lhs = CONST(0);
         auto rhs = CONST(1);
         auto node = binary_op(lhs, AST::BinaryOp::AND, rhs);
         AST::detail::Context ctx;
-        EXPECT_EQ(node->eval(ctx), 0);
+        int result = TestUtils::evaluate(*node, ctx);
+        EXPECT_EQ(result, 0);
     }
     {
         auto lhs = CONST(1);
         auto rhs = CONST(0);
         auto node = binary_op(lhs, AST::BinaryOp::AND, rhs);
         AST::detail::Context ctx;
-        EXPECT_EQ(node->eval(ctx), 0);
+
+        int result = TestUtils::evaluate(*node, ctx);
+        EXPECT_EQ(result, 0);
     }
     {
         auto lhs = CONST(1);
         auto rhs = CONST(1);
         auto node = binary_op(lhs, AST::BinaryOp::AND, rhs);
         AST::detail::Context ctx;
-        EXPECT_EQ(node->eval(ctx), 1);
+        int result = TestUtils::evaluate(*node, ctx);
+        EXPECT_EQ(result, 1);
     }
 }
 
@@ -489,28 +500,36 @@ TEST(ASTTestBase, BinaryOpORTruthTable)
         auto rhs = CONST(0);
         auto node = binary_op(lhs, AST::BinaryOp::OR, rhs);
         AST::detail::Context ctx;
-        EXPECT_EQ(node->eval(ctx), 0);
+
+        int result = TestUtils::evaluate(*node, ctx);
+        EXPECT_EQ(result, 0);
     }
     {
         auto lhs = CONST(0);
         auto rhs = CONST(1);
         auto node = binary_op(lhs, AST::BinaryOp::OR, rhs);
         AST::detail::Context ctx;
-        EXPECT_EQ(node->eval(ctx), 1);
+
+        int result = TestUtils::evaluate(*node, ctx);
+        EXPECT_EQ(result, 1);
     }
     {
         auto lhs = CONST(1);
         auto rhs = CONST(0);
         auto node = binary_op(lhs, AST::BinaryOp::OR, rhs);
         AST::detail::Context ctx;
-        EXPECT_EQ(node->eval(ctx), 1);
+
+        int result = TestUtils::evaluate(*node, ctx);
+        EXPECT_EQ(result, 1);
     }
     {
         auto lhs = CONST(1);
         auto rhs = CONST(1);
         auto node = binary_op(lhs, AST::BinaryOp::OR, rhs);
         AST::detail::Context ctx;
-        EXPECT_EQ(node->eval(ctx), 1);
+
+        int result = TestUtils::evaluate(*node, ctx);
+        EXPECT_EQ(result, 1);
     }
 }
 
@@ -521,7 +540,9 @@ TEST(ASTTestBase, AndOrPrecedence)
         auto inner = binary_op(CONST(0), AST::BinaryOp::AND, CONST(0));
         auto expr  = binary_op(CONST(1), AST::BinaryOp::OR, inner);
         AST::detail::Context ctx;
-        EXPECT_EQ(expr->eval(ctx), 1);
+
+        int result = TestUtils::evaluate(*expr, ctx);
+        EXPECT_EQ(result, 1);
     }
 
     // (1 || 0) && 0  ->  0
@@ -529,7 +550,9 @@ TEST(ASTTestBase, AndOrPrecedence)
         auto left  = binary_op(CONST(1), AST::BinaryOp::OR, CONST(0));
         auto expr  = binary_op(left, AST::BinaryOp::AND, CONST(0));
         AST::detail::Context ctx;
-        EXPECT_EQ(expr->eval(ctx), 0);
+
+        int result = TestUtils::evaluate(*expr, ctx);
+        EXPECT_EQ(result, 0);
     }
 }
 
@@ -541,7 +564,9 @@ TEST(ASTTestBase, AndOrWithRelational)
         auto rightCmp = binary_op(CONST(2), AST::BinaryOp::LS, CONST(3));
         auto expr     = binary_op(leftCmp, AST::BinaryOp::AND, rightCmp);
         AST::detail::Context ctx;
-        EXPECT_EQ(expr->eval(ctx), 1);
+
+        int result = TestUtils::evaluate(*expr, ctx);
+        EXPECT_EQ(result, 1);
     }
 
     // (1 > 2) || (2 < 3)  -> 0 || 1 -> 1
@@ -550,7 +575,9 @@ TEST(ASTTestBase, AndOrWithRelational)
         auto rightCmp = binary_op(CONST(2), AST::BinaryOp::LS, CONST(3));
         auto expr     = binary_op(leftCmp, AST::BinaryOp::OR, rightCmp);
         AST::detail::Context ctx;
-        EXPECT_EQ(expr->eval(ctx), 1);
+
+        int result = TestUtils::evaluate(*expr, ctx);
+        EXPECT_EQ(result, 1);
     }
 
     // (1 == 1) && (3 == 4)  -> 1 && 0 -> 0
@@ -559,7 +586,9 @@ TEST(ASTTestBase, AndOrWithRelational)
         auto rightCmp = binary_op(CONST(3), AST::BinaryOp::EQ, CONST(4));
         auto expr     = binary_op(leftCmp, AST::BinaryOp::AND, rightCmp);
         AST::detail::Context ctx;
-        EXPECT_EQ(expr->eval(ctx), 0);
+
+        int result = TestUtils::evaluate(*expr, ctx);
+        EXPECT_EQ(result, 0);
     }
 }
 
@@ -570,7 +599,9 @@ TEST(ASTTestBase, BinaryOpBIT_AND)
     auto node = binary_op(lhs, AST::BinaryOp::BIT_AND, rhs);
 
     AST::detail::Context ctx;
-    EXPECT_EQ(node->eval(ctx), 8); // 1000
+
+    int result = TestUtils::evaluate(*node, ctx);
+    EXPECT_EQ(result, 8); // 1000
 }
 
 TEST(ASTTestBase, BinaryOpBIT_OR)
@@ -580,7 +611,9 @@ TEST(ASTTestBase, BinaryOpBIT_OR)
     auto node = binary_op(lhs, AST::BinaryOp::BIT_OR, rhs);
 
     AST::detail::Context ctx;
-    EXPECT_EQ(node->eval(ctx), 14); // 1110
+
+    int result = TestUtils::evaluate(*node, ctx);
+    EXPECT_EQ(result, 14); // 1110
 }
 
 TEST(ASTTestBase, BitAndOrWithZero)
@@ -588,12 +621,16 @@ TEST(ASTTestBase, BitAndOrWithZero)
     {
         auto node = binary_op(CONST(0), AST::BinaryOp::BIT_AND, CONST(123));
         AST::detail::Context ctx;
-        EXPECT_EQ(node->eval(ctx), 0);
+
+        int result = TestUtils::evaluate(*node, ctx);
+        EXPECT_EQ(result, 0);
     }
     {
         auto node = binary_op(CONST(0), AST::BinaryOp::BIT_OR, CONST(123));
         AST::detail::Context ctx;
-        EXPECT_EQ(node->eval(ctx), 123);
+
+        int result = TestUtils::evaluate(*node, ctx);
+        EXPECT_EQ(result, 123);
     }
 }
 
@@ -604,7 +641,9 @@ TEST(ASTTestBase, BitAndOrCombined)
     auto fullExpr = binary_op(andNode, AST::BinaryOp::BIT_OR, CONST(3));
 
     AST::detail::Context ctx;
-    EXPECT_EQ(fullExpr->eval(ctx), 11);
+
+    int result = TestUtils::evaluate(*fullExpr, ctx);
+    EXPECT_EQ(result, 11);
 }
 
 TEST(ASTTestBase, BitwiseWithRelational)
@@ -615,7 +654,9 @@ TEST(ASTTestBase, BitwiseWithRelational)
         auto expr = binary_op(bit, AST::BinaryOp::EQ, CONST(8));
 
         AST::detail::Context ctx;
-        EXPECT_EQ(expr->eval(ctx), 1);
+
+        int result = TestUtils::evaluate(*expr, ctx);
+        EXPECT_EQ(result, 1);
     }
 
     // (10 | 12) < 20 -> 1 (14 < 20)
@@ -624,7 +665,9 @@ TEST(ASTTestBase, BitwiseWithRelational)
         auto expr = binary_op(bit, AST::BinaryOp::LS, CONST(20));
 
         AST::detail::Context ctx;
-        EXPECT_EQ(expr->eval(ctx), 1);
+
+        int result = TestUtils::evaluate(*expr, ctx);
+        EXPECT_EQ(result, 1);
     }
 }
 
@@ -637,7 +680,9 @@ TEST(ASTTestBase, BitwiseWithLogical)
         auto fullExpr  = binary_op(leftBit, AST::BinaryOp::AND, rightBit);
 
         AST::detail::Context ctx;
-        EXPECT_EQ(fullExpr->eval(ctx), 1);
+
+        int result = TestUtils::evaluate(*fullExpr, ctx);
+        EXPECT_EQ(result, 1);
     }
 
     // (10 & 0) || (0 | 0) -> 0 || 0 -> 0
@@ -647,7 +692,9 @@ TEST(ASTTestBase, BitwiseWithLogical)
         auto fullExpr  = binary_op(leftBit, AST::BinaryOp::OR, rightBit);
 
         AST::detail::Context ctx;
-        EXPECT_EQ(fullExpr->eval(ctx), 0);
+
+        int result = TestUtils::evaluate(*fullExpr, ctx);
+        EXPECT_EQ(result, 0);
     }
 }
 

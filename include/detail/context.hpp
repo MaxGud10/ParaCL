@@ -18,7 +18,7 @@ class Context final
 {
 public:
     using Name     = std::string_view;
-    using VarTable = std::unordered_map<Name, int>;  
+    using VarTable = std::unordered_map<Name, int>;
 
     std::vector<VarTable> varTables_;
     int32_t               curScope_ = -1;
@@ -87,7 +87,7 @@ public:
             out_value = t->at(name);
             return true;
         }
-        
+
         return false;
     }
 
@@ -99,7 +99,17 @@ public:
 
         throw std::runtime_error(std::string("Undeclared variable: ") + std::string(name) + "\n");
     }
- 
+
+    int get_value(const std::string_view name) const {
+        std::string key(name);
+        for (auto it = varTables_.rbegin(); it != varTables_.rend(); ++it) {
+            auto found = it->find(key);
+            if (found != it->end())
+                return found->second;
+        }
+        throw std::runtime_error("Variable " + key + " not declared");
+    }
+
 };
 
 } // namespace detail
