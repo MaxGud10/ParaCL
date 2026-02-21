@@ -1,118 +1,131 @@
 #pragma once
 
-#include <cstdint>
-#include <unordered_map>
-#include <string_view>
+#include <iostream>
 #include <stdexcept>
 #include <string>
-#include <vector>
-#include <iostream>
+#include <utility>
+
+#include "value.hpp"
+#include "log.h"
 
 namespace AST
 {
-
 namespace detail
 {
 
 class Context final
 {
 public:
-    using Name     = std::string_view;
-    using VarTable = std::unordered_map<Name, int>;
+    using Name  = AST::detail::Name;
+    using Frame = AST::detail::Frame;
 
-    std::vector<VarTable> varTables_;
-    int32_t               curScope_ = -1;
-    std::ostream&         out;
+    std::ostream& out;
+    FramePtr      current_;
 
-    Context(std::ostream& _out = std::cout) : out(_out) {}
-
-    VarTable& table_at(int32_t scopeId)
+public:
+    explicit Context(std::ostream& outputStream = std::cout)
+        : out(outputStream)
     {
-        return varTables_[static_cast<std::size_t>(scopeId)];
+        current_ = std::make_shared<Frame>();
+        current_->parent = nullptr;
+
+        LOG("CTX: init root frame ptr={}\n", static_cast<const void*>(current_.get()));
     }
 
-    const VarTable& table_at(int32_t scopeId) const
+    void push_scope()
     {
-        return varTables_[static_cast<std::size_t>(scopeId)];
+        auto newFrame = std::make_shared<Frame>();
+             newFrame->parent = current_;
+
+        LOG("CTX: push_scope: old={} new={} depth_before={}\n",
+            static_cast<const void*>(current_.get()),
+            static_cast<const void*>(newFrame.get()),
+            depth());
+
+        current_ = std::move(newFrame);
+
+        LOG("CTX: push_scope: depth_after={}\n", depth());
     }
 
-    VarTable* find_table_with(Name name)
+    void pop_scope()
     {
-        for (int32_t scopeId = curScope_; scopeId >= 0; --scopeId)
+        if (!current_ || !current_->parent)
+            throw std::runtime_error("pop_scope(): no parent scope (attempt to pop root scope)");
+
+        LOG("CTX: pop_scope: cur={} parent={} depth_before={}\n",
+            static_cast<const void*>(current_.get()),
+            static_cast<const void*>(current_->parent.get()),
+            depth());
+
+        current_ = current_->parent;
+
+        LOG("CTX: pop_scope: depth_after={}\n", depth());
+    }
+
+    void enter_scope() { push_scope(); }
+    void exit_scope()  { pop_scope();  }
+
+    FramePtr find_frame_with(Name name) const
+    {
+        for (auto framePointer = current_; framePointer; framePointer = framePointer->parent)
         {
-            auto& t = table_at(scopeId);
-            if (t.contains(name))
-                return &t;
+            if (framePointer->vars.find(name) != framePointer->vars.end())
+                return framePointer;
         }
         return nullptr;
     }
 
-    const VarTable* find_table_with(Name name) const
+    Value assign(Name name, Value value)
     {
-        for (int32_t scopeId = curScope_; scopeId >= 0; --scopeId)
-        {
-            auto& t = table_at(scopeId);
-            if (t.contains(name))
-                return &t;
-        }
-        return nullptr;
-    }
+        if (!current_)
+            throw std::runtime_error("assign(): current frame is null");
 
-    int assign(Name name, int value)
-    {
-        if (auto* t = find_table_with(name))
+        if (auto foundFrame = find_frame_with(name))
         {
-            (*t)[name] = value;
-            return value;
+            foundFrame->vars[name] = std::move(value);
+            LOG("CTX: assign update name='{}' in frame={}\n",
+                name, static_cast<const void*>(foundFrame.get()));
+            return foundFrame->vars.at(name);
         }
 
-        current_table()[name] = value;
-        return value;
+        current_->vars[name] = std::move(value);
+        LOG("CTX: assign create name='{}' in frame={}\n",
+            name, static_cast<const void*>(current_.get()));
+        return current_->vars.at(name);
     }
 
-    VarTable& current_table()
+    Value get_or_throw(Name name) const
     {
-        return varTables_[static_cast<std::size_t>(curScope_)];
+        Value outValue{};
+        if (try_get(name, outValue))
+            return outValue;
+
+        throw std::runtime_error("Undeclared variable: " + std::string(name));
     }
 
-    const VarTable &current_table() const
+    bool try_get(Name name, Value& out_value) const
     {
-        return varTables_[static_cast<std::size_t>(curScope_)];
-    }
-
-    bool try_get(Name name, int &out_value) const
-    {
-        if (auto* t = find_table_with(name))
+        if (auto foundFrame = find_frame_with(name))
         {
-            out_value = t->at(name);
+            out_value = foundFrame->vars.at(name);
+            LOG("CTX: get name='{}' found in frame={}\n",
+                name, static_cast<const void*>(foundFrame.get()));
             return true;
         }
 
+        LOG("CTX: get name='{}' NOT FOUND\n", name);
         return false;
     }
 
-    int get_or_throw(Name name) const
+    int depth() const
     {
-        int v = 0;
-        if (try_get(name, v))
-            return v;
-
-        throw std::runtime_error(std::string("Undeclared variable: ") + std::string(name) + "\n");
+        int depthValue = -1;
+        for (auto framePointer = current_; framePointer; framePointer = framePointer->parent)
+            ++depthValue;
+        return depthValue;
     }
-
-    int get_value(const std::string_view name) const {
-        std::string key(name);
-        for (auto it = varTables_.rbegin(); it != varTables_.rend(); ++it) {
-            auto found = it->find(key);
-            if (found != it->end())
-                return found->second;
-        }
-        throw std::runtime_error("Variable " + key + " not declared");
-    }
-
 };
 
 } // namespace detail
 
 } // namespace AST
-

@@ -2,293 +2,462 @@
 
 #include <iostream>
 #include <stack>
+#include <vector>
+#include <stdexcept>
+
 #include "detail/ivisitor.hpp"
 #include "node.hpp"
 #include "detail/context.hpp"
+#include "detail/value.hpp"
+#include "log.h"
 
-class TreeTraverse : public Visitor {
-    private:
-        AST::detail::Context& ctx_;
-        std::stack<int> eval_stack;
+struct ReturnSignal
+{
+    AST::detail::Value value;
+};
 
-    public:
-    TreeTraverse(AST::detail::Context& ctx) : ctx_(ctx) {}
-    ~TreeTraverse() = default;
+class TreeTraverse : public Visitor
+{
+private:
+    using Value = AST::detail::Value;
 
-    int get_result() const {
-        if (eval_stack.empty()) return 0;
-        return eval_stack.top();
+    AST::detail::Context &ctx_;
+    std::stack<Value>     eval_stack_;
+
+    int scope_depth() const
+    {
+        int depth = -1;
+        for (auto framePointer = ctx_.current_; framePointer; framePointer = framePointer->parent)
+            ++depth;
+        return depth;
     }
 
-    void Visit(AST::ScopeNode& n) override {
-        ++ctx_.curScope_;
+    static int as_int(const Value& value)
+    {
+        if (!std::holds_alternative<int>(value))
+            throw std::runtime_error("Type error: expected int, got func");
+        return std::get<int>(value);
+    }
 
-        ctx_.varTables_.push_back(AST::detail::Context::VarTable());
+    static AST::detail::FunctionPtr as_function(const Value& value)
+    {
+        if (!std::holds_alternative<AST::detail::FunctionPtr>(value))
+            throw std::runtime_error("Type error: expected func, got int");
+        return std::get<AST::detail::FunctionPtr>(value);
+    }
 
-		LOG("ctx.curScope_ = {}\n", ctx_.curScope_);
-		LOG("ctx.varTables_ size = {}\n", ctx_.varTables_.size());
+    static Value pop_value(std::stack<Value>& valueStack)
+    {
+        if (valueStack.empty())
+            return Value{0};
 
-		MSG("Scopes children:\n");
-        auto children_ = n.get_children();
-		for ([[maybe_unused]]const auto& child : children_)
+        Value topValue = valueStack.top();
+        valueStack.pop();
+
+        return topValue;
+    }
+
+    static const char* value_kind(const Value& value)
+    {
+        if (std::holds_alternative<int>(value))
+            return "int";
+        return "func";
+    }
+
+    void push_value(const Value& value)
+    {
+        LOG("EVAL: push {} (stack size before: {})\n", value_kind(value), eval_stack_.size());
+        eval_stack_.push(value);
+    }
+
+    Value pop_value()
+    {
+        Value value = pop_value(eval_stack_);
+        LOG("EVAL: pop  {} (stack size after: {})\n", value_kind(value), eval_stack_.size());
+        return value;
+    }
+
+public:
+    explicit TreeTraverse(AST::detail::Context& context)
+        : ctx_(context){}
+
+    ~TreeTraverse() override = default;
+
+    int get_result() const
+    {
+        if (eval_stack_.empty())
+            return 0;
+
+        return as_int(eval_stack_.top());
+    }
+
+    void Visit(AST::ScopeNode& scopeNode) override
+    {
+        LOG("SCOPE: enter depth={} children={}\n", scope_depth() + 1, scopeNode.nstms());
+        ctx_.push_scope();
+
+        Value lastExpressionValue = Value{0};
+
+        const auto& scopeChildren = scopeNode.get_children();
+        for (auto* childStatement : scopeChildren)
         {
-			LOG("{}\n", static_cast<const void*>(child));
+            LOG("SCOPE: eval child ptr={}\n", static_cast<const void*>(childStatement));
+            childStatement->accept(*this);
+            lastExpressionValue = pop_value();
         }
 
-        int last_result = 0;
-        for (const auto& child : children_)
-        {
-			LOG("Evaluating {}\n", static_cast<const void*>(child));
-            child->accept(*this);
-            if (!eval_stack.empty()) {
-                last_result = eval_stack.top();
-                eval_stack.pop();
-            }
-        }
+        ctx_.pop_scope();
+        LOG("SCOPE: exit  depth={}\n", scope_depth());
 
-        ctx_.varTables_.pop_back();
-
-        --ctx_.curScope_;
-         eval_stack.push(last_result);
-
-		LOG("ctx.curScope_ = {}\n", ctx_.curScope_);
-		LOG("ctx.varTables_ size = {}\n", ctx_.varTables_.size());
-
-		return;
+        push_value(lastExpressionValue);
     }
 
-    void Visit(AST::ConstantNode& n) override {
-        LOG("Evaluating constant: {}\n", n.get_val());
-        eval_stack.push(n.get_val());
+    void Visit(AST::ConstantNode& constantNode) override
+    {
+        LOG("CONST: {}\n", constantNode.get_val());
+        push_value(Value{constantNode.get_val()});
     }
 
-    void Visit(AST::AssignNode& n) override {
-        MSG("Evaluating assignment\n");
-        n.get_expr()->accept(*this);
-
-        int value = eval_stack.top(); eval_stack.pop();
-        ctx_.assign(n.get_dest()->get_name(), value);
-        eval_stack.push(value);
+    void Visit(AST::VariableNode& variableNode) override
+    {
+        Value loadedValue = ctx_.get_or_throw(variableNode.get_name());
+        LOG("VAR: name='{}' kind={}\n", variableNode.get_name(), value_kind(loadedValue));
+        push_value(loadedValue);
     }
 
-    void Visit(AST::WhileNode& n) override {
-        int result = 0;
+    void Visit(AST::AssignNode& assignNode) override
+    {
+        MSG("ASSIGN: begin\n");
 
-        n.get_cond()->accept(*this);
-        int cond = eval_stack.top(); eval_stack.pop();
+        assignNode.get_expr()->accept(*this);
+        Value assignedValue = pop_value();
 
-        while (cond) {
-            n.get_scope()->accept(*this);
+        std::string_view destinationName = assignNode.get_dest()->get_name();
+        ctx_.assign(destinationName, assignedValue);
 
-            if (!eval_stack.empty()) {
-                result = eval_stack.top(); eval_stack.pop();
-            }
-
-            n.get_cond()->accept(*this);
-            cond = eval_stack.top(); eval_stack.pop();
-        }
-
-        eval_stack.push(result);
+        LOG("ASSIGN: name='{}' kind={}\n", destinationName, value_kind(assignedValue));
+        push_value(assignedValue);
     }
 
-    void Visit(AST::IfNode& n) override {
-        n.get_cond()->accept(*this);
-        int cond_res = eval_stack.top(); eval_stack.pop();
+    void Visit(AST::PrintNode& printNode) override
+    {
+        MSG("PRINT: begin\n");
 
-        if (cond_res) {
-            n.get_action()->accept(*this);
-            return;
-        } else if (n.get_else_action()) {
-            n.get_else_action()->accept(*this);
-        } else {
-            eval_stack.push(0);
-            return;
-        }
+        printNode.get_expr()->accept(*this);
+        Value printedValue = pop_value();
 
-        if (eval_stack.empty())
-            eval_stack.push(0);
+        int printedInteger = as_int(printedValue);
+        ctx_.out << printedInteger << std::endl;
 
+        LOG("PRINT: value={}\n", printedInteger);
+        push_value(printedValue);
     }
 
-    void Visit(AST::PrintNode& n) override {
-		MSG("Evaluation print\n");
-
-        n.get_expr()->accept(*this);
-        int value = eval_stack.top(); eval_stack.pop();
-
-        ctx_.out << value << std::endl;
-
-        eval_stack.push(value);
-    }
-
-    void Visit(AST::InNode& n) override {
-        int value = 0;
-
-        std::cin >> value;
+    void Visit(AST::InNode& /*inputNode*/) override
+    {
+        int inputValue = 0;
+        std::cin >> inputValue;
 
         if (std::cin.fail())
-        {
             throw std::runtime_error("Incorrect input");
-        }
 
-        eval_stack.push(value);
+        LOG("INPUT: {}\n", inputValue);
+        push_value(Value{inputValue});
     }
 
-    void Visit(AST::VariableNode& n) override {
-        int value = ctx_.get_value(n.get_name());
-        eval_stack.push(value);
-    }
+    void Visit(AST::IfNode& ifNode) override
+    {
+        MSG("IF: begin\n");
 
-    void Visit(AST::BinaryOpNode& n) override {
-    MSG("Evaluating Binary Operation\n");
+        ifNode.get_cond()->accept(*this);
+        int conditionValue = as_int(pop_value());
 
-    switch (n.get_op()) {
-        case AST::BinaryOp::AND: {
-            n.get_left()->accept(*this);
-            int leftVal = eval_stack.top(); eval_stack.pop();
+        LOG("IF: cond={}\n", conditionValue);
 
-            if (!leftVal) {
-                eval_stack.push(0);
-                return;
-            }
-
-            n.get_right()->accept(*this);
-            int rightVal = eval_stack.top(); eval_stack.pop();
-            eval_stack.push(rightVal ? 1 : 0);
-            return;
-        }
-
-        case AST::BinaryOp::OR: {
-            n.get_left()->accept(*this);
-            int leftVal = eval_stack.top(); eval_stack.pop();
-
-            if (leftVal) {
-                eval_stack.push(1);
-                return;
-            }
-
-            n.get_right()->accept(*this);
-            int rightVal = eval_stack.top(); eval_stack.pop();
-            eval_stack.push(rightVal ? 1 : 0);
-            return;
-        }
-
-        case AST::BinaryOp::DIV: {
-            n.get_left()->accept(*this);
-            int leftVal = eval_stack.top(); eval_stack.pop();
-
-            n.get_right()->accept(*this);
-            int rightVal = eval_stack.top(); eval_stack.pop();
-
-            if (rightVal == 0)
-                throw std::runtime_error("Divide by zero");
-
-            eval_stack.push(leftVal / rightVal);
-            return;
-        }
-
-        default: {
-            n.get_left()->accept(*this);
-            int leftVal = eval_stack.top(); eval_stack.pop();
-
-            n.get_right()->accept(*this);
-            int rightVal = eval_stack.top(); eval_stack.pop();
-
-            int result;
-            switch (n.get_op()) {
-                case AST::BinaryOp::ADD:    result = leftVal + rightVal; break;
-                case AST::BinaryOp::SUB:    result = leftVal - rightVal; break;
-                case AST::BinaryOp::MUL:    result = leftVal * rightVal; break;
-                case AST::BinaryOp::MOD:    result = leftVal % rightVal; break;
-
-                case AST::BinaryOp::LS:     result = leftVal <  rightVal; break;
-                case AST::BinaryOp::GR:     result = leftVal >  rightVal; break;
-                case AST::BinaryOp::LS_EQ:  result = leftVal <= rightVal; break;
-                case AST::BinaryOp::GR_EQ:  result = leftVal >= rightVal; break;
-                case AST::BinaryOp::EQ:     result = leftVal == rightVal; break;
-                case AST::BinaryOp::NOT_EQ: result = leftVal != rightVal; break;
-
-                case AST::BinaryOp::BIT_AND: result = leftVal & rightVal; break;
-                case AST::BinaryOp::BIT_OR:  result = leftVal | rightVal; break;
-
-                default:
-                    throw std::runtime_error("Unknown binary operation");
-            }
-
-            LOG("It's {}\n", result);
-            eval_stack.push(result);
-            return;
-        }
-    }
-}
-    void Visit(AST::UnaryOpNode& n) override {
-
-        n.get_operand()->accept(*this);
-        int operandVal = eval_stack.top(); eval_stack.pop();
-
-        switch (n.get_op())
+        if (conditionValue)
         {
-            case AST::UnaryOp::NEG:
-                eval_stack.push(-operandVal);
-                return;
+            ifNode.get_action()->accept(*this);
+            return;
+        }
 
-            case AST::UnaryOp::NOT:
-                eval_stack.push(!operandVal);
-                return;
+        if (ifNode.get_else_action())
+        {
+            ifNode.get_else_action()->accept(*this);
+            return;
+        }
+
+        push_value(Value{0});
+    }
+
+    void Visit(AST::WhileNode& whileNode) override
+    {
+        MSG("WHILE: begin\n");
+
+        Value lastIterationValue = Value{0};
+
+        whileNode.get_cond()->accept(*this);
+        int conditionValue = as_int(pop_value());
+
+        while (conditionValue)
+        {
+            whileNode.get_scope()->accept(*this);
+            lastIterationValue = pop_value();
+
+            whileNode.get_cond()->accept(*this);
+            conditionValue      = as_int(pop_value());
+        }
+
+        push_value(lastIterationValue);
+    }
+
+    void Visit(AST::ForNode& forNode) override
+    {
+        MSG("FOR: begin\n");
+
+        Value lastIterationValue = Value{0};
+
+        if (forNode.get_init())
+        {
+            forNode.get_init()->accept(*this);
+            (void)pop_value();
+        }
+
+        forNode.get_cond()->accept(*this);
+        int conditionValue = as_int(pop_value());
+
+        while (conditionValue)
+        {
+            forNode.get_body()->accept(*this);
+            lastIterationValue = pop_value();
+
+            if (forNode.get_iter())
+            {
+                forNode.get_iter()->accept(*this);
+                (void)pop_value();
+            }
+
+            forNode.get_cond()->accept(*this);
+            conditionValue = as_int(pop_value());
+        }
+
+        push_value(lastIterationValue);
+    }
+
+    void Visit(AST::UnaryOpNode& unaryOpNode) override
+    {
+        MSG("UNARY: begin\n");
+
+        unaryOpNode.get_operand()->accept(*this);
+        int operandValue = as_int(pop_value());
+
+        int resultValue = 0;
+        switch (unaryOpNode.get_op())
+        {
+            case AST::UnaryOp::NEG: resultValue = -operandValue; break;
+            case AST::UnaryOp::NOT: resultValue = !operandValue; break;
 
             default:
                 throw std::runtime_error("Unknown unary operation");
         }
+
+        LOG("UNARY: operand={} result={}\n", operandValue, resultValue);
+        push_value(Value{resultValue});
     }
 
-    void Visit(AST::ForNode& n) override {
-        int result = 0;
+    void Visit(AST::BinaryOpNode& binaryOpNode) override
+    {
+        MSG("BINARY: begin\n");
 
-        if (n.get_init()) {
-            n.get_init()->accept(*this);
-        }
-
-        n.get_cond()->accept(*this);
-        int cond = eval_stack.top(); eval_stack.pop();
-        for ( ; cond; )
+        if (binaryOpNode.get_op() == AST::BinaryOp::AND)
         {
-            n.get_body()->accept(*this);
-            if (!eval_stack.empty()) {
-                result = eval_stack.top(); eval_stack.pop();
+            binaryOpNode.get_left()->accept(*this);
+            int leftValue = as_int(pop_value());
+
+            if (!leftValue)
+            {
+                push_value(Value{0});
+                return;
             }
 
-            if (n.get_iter()) {
-                n.get_iter()->accept(*this);
-            }
-            if (!eval_stack.empty()) eval_stack.pop();
+            binaryOpNode.get_right()->accept(*this);
+            int rightValue = as_int(pop_value());
+            push_value(Value{rightValue ? 1 : 0});
 
-            n.get_cond()->accept(*this);
-            cond = eval_stack.top(); eval_stack.pop();
+            return;
         }
 
-        eval_stack.push(result);
-        return;
+        if (binaryOpNode.get_op() == AST::BinaryOp::OR)
+        {
+            binaryOpNode.get_left()->accept(*this);
+            int leftValue = as_int(pop_value());
+
+            if (leftValue)
+            {
+                push_value(Value{1});
+                return;
+            }
+
+            binaryOpNode.get_right()->accept(*this);
+            int rightValue = as_int(pop_value());
+            push_value(Value{rightValue ? 1 : 0});
+
+            return;
+        }
+
+        binaryOpNode.get_left()->accept(*this);
+        int leftValue = as_int(pop_value());
+
+        binaryOpNode.get_right()->accept(*this);
+        int rightValue = as_int(pop_value());
+
+        int resultValue = 0;
+
+        switch (binaryOpNode.get_op())
+        {
+            case AST::BinaryOp::ADD:     resultValue = leftValue + rightValue; break;
+            case AST::BinaryOp::SUB:     resultValue = leftValue - rightValue; break;
+            case AST::BinaryOp::MUL:     resultValue = leftValue * rightValue; break;
+
+            case AST::BinaryOp::DIV:
+                if (rightValue == 0)
+                    throw std::runtime_error("Divide by zero");
+                resultValue = leftValue / rightValue;
+                break;
+
+            case AST::BinaryOp::MOD:     resultValue = leftValue % rightValue; break;
+
+            case AST::BinaryOp::LS:      resultValue = leftValue <  rightValue; break;
+            case AST::BinaryOp::GR:      resultValue = leftValue >  rightValue; break;
+            case AST::BinaryOp::LS_EQ:   resultValue = leftValue <= rightValue; break;
+            case AST::BinaryOp::GR_EQ:   resultValue = leftValue >= rightValue; break;
+            case AST::BinaryOp::EQ:      resultValue = leftValue == rightValue; break;
+            case AST::BinaryOp::NOT_EQ:  resultValue = leftValue != rightValue; break;
+
+            case AST::BinaryOp::BIT_AND: resultValue = leftValue &  rightValue; break;
+            case AST::BinaryOp::BIT_OR:  resultValue = leftValue |  rightValue; break;
+
+            default:
+                throw std::runtime_error("Unknown binary operation");
+        }
+
+        LOG("BINARY: left={} right={} result={}\n", leftValue, rightValue, resultValue);
+        push_value(Value{resultValue});
     }
 
-    void Visit(const AST::ScopeNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::ForNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::ConstantNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::AssignNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::WhileNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::IfNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::InNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::VariableNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::BinaryOpNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::UnaryOpNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::PrintNode& node) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(AST::FunctionNode& functionNode) override
+    {
+        MSG("FUNC: literal begin\n");
+
+        auto functionObject    = std::make_shared<AST::detail::Function>();
+        functionObject->params = functionNode.get_params();
+        functionObject->body   = functionNode.get_body();
+        functionObject->env    = ctx_.current_;
+
+        if (functionNode.has_internal_name())
+        {
+            functionObject->internalName    = functionNode.get_internal_name();
+            functionObject->hasInternalName = true;
+
+            auto recursiveEnvironment    = std::make_shared<AST::detail::Frame>();
+            recursiveEnvironment->parent = ctx_.current_;
+            recursiveEnvironment->vars[functionObject->internalName] = functionObject;
+            functionObject->env          = recursiveEnvironment;
+
+            LOG("FUNC: internalName='{}'\n", functionObject->internalName);
+        }
+
+        push_value(Value{functionObject});
+    }
+
+    void Visit(AST::CallNode& callNode) override
+    {
+        MSG("CALL: begin\n");
+
+        callNode.get_callee()->accept(*this);
+        Value calleeValue = pop_value();
+
+        AST::detail::FunctionPtr functionObject = as_function(calleeValue);
+
+        // args
+        std::vector<Value> evaluatedArguments;
+        evaluatedArguments.reserve(callNode.get_args().size());
+
+        for (auto* argumentExpression : callNode.get_args())
+        {
+            argumentExpression->accept(*this);
+            evaluatedArguments.push_back(pop_value());
+        }
+
+        if (evaluatedArguments.size() != functionObject->params.size())
+            throw std::runtime_error("Arity mismatch in function call");
+
+        auto savedFrame   = ctx_.current_;
+        auto callFrame    = std::make_shared<AST::detail::Frame>();
+        callFrame->parent = functionObject->env;
+
+        for (size_t index = 0; index < evaluatedArguments.size(); ++index)
+        {
+            std::string_view paramName = functionObject->params[index];
+            callFrame->vars[paramName] = evaluatedArguments[index];
+            LOG("CALL: bind param '{}' kind={}\n", paramName, value_kind(evaluatedArguments[index]));
+        }
+
+        ctx_.current_ = callFrame;
+
+        try
+        {
+            functionObject->body->accept(*this);
+            Value functionResult = pop_value();
+            ctx_.current_ = savedFrame;
+
+            LOG("CALL: normal return kind={}\n", value_kind(functionResult));
+            push_value(functionResult);
+        }
+        catch (const ReturnSignal& returnSignal)
+        {
+            ctx_.current_ = savedFrame;
+            LOG("CALL: explicit return kind={}\n", value_kind(returnSignal.value));
+            push_value(returnSignal.value);
+        }
+    }
+
+    void Visit(AST::ReturnNode& returnNode) override
+    {
+        MSG("RETURN: begin\n");
+
+        if (auto* returnedExpression = returnNode.get_expr())
+        {
+            returnedExpression->accept(*this);
+            Value returnedValue = pop_value();
+            LOG("RETURN: kind={}\n", value_kind(returnedValue));
+            throw ReturnSignal{returnedValue};
+        }
+
+        throw ReturnSignal{Value{0}};
+    }
+
+    void Visit(const AST::ScopeNode&   ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::ForNode&     ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::ConstantNode&) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::AssignNode&  ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::WhileNode&   ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::IfNode&      ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::InNode&      ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::VariableNode&) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::BinaryOpNode&) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::UnaryOpNode& ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::PrintNode&   ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::FunctionNode&) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::CallNode&    ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::ReturnNode&  ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
 };
 
-namespace TestUtils {
-    inline int evaluate(AST::INode& node, AST::detail::Context& ctx) {
-        TreeTraverse visitor(ctx);
+namespace TestUtils
+{
+    inline int evaluate(AST::INode& node, AST::detail::Context& context)
+    {
+        TreeTraverse visitor(context);
         node.accept(visitor);
         return visitor.get_result();
     }
 }
-
-

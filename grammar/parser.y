@@ -65,6 +65,10 @@
     OR_OP       "||"
 	BIT_AND     "&"
     BIT_OR      "|"
+    FUNC        "func"
+    RETURN      "return"
+    COLON       ":"
+    COMMA       ","
 ;
 
 %token <std::string>	ID		"identifier"
@@ -81,6 +85,24 @@
 %nterm <AST::ForNode*>          For_Stm
 %nterm <AST::WhileNode*> 		While_Stm
 %nterm <AST::VariableNode*> 	Variable
+%nterm <AST::FunctionNode*>     FunctionLit
+%nterm <AST::ExpressionNode*>   Primary
+%nterm <AST::ExpressionNode*>   Postfix
+// %nterm <AST::ExpressionNode*>   OrExpr
+// %nterm <AST::ExpressionNode*>   AndExpr
+// %nterm <AST::ExpressionNode*>   BitOrExpr
+// %nterm <AST::ExpressionNode*>   BitAndExpr
+// %nterm <AST::ExpressionNode*>   EqExpr
+// %nterm <AST::ExpressionNode*>   RelExpr
+// %nterm <AST::ExpressionNode*>   AddExpr
+// %nterm <AST::ExpressionNode*>   MulExpr
+// %nterm <AST::ExpressionNode*>   UnaryExpr
+
+%nterm <std::vector<AST::ExpressionNode*>> ArgList
+%nterm <std::vector<AST::ExpressionNode*>> ArgListOpt
+%nterm <std::vector<std::string>>          ParamList
+%nterm <std::vector<std::string>>          ParamListOpt
+%nterm <std::string>                       NameOpt
 
 %nterm <AST::StatementNode*>	Statement
 
@@ -150,6 +172,16 @@ Statement:
 
 				$$ = $1;
 			}
+        |   RETURN Expr ";"
+            {
+                MSG("Return with value\n");
+                $$ = drv.bld.create<AST::ReturnNode>($2);
+            }
+        |   RETURN ";"
+            {
+                MSG("Return without value\n");
+                $$ = drv.bld.create<AST::ReturnNode>(nullptr);
+            }
 		| 	Scope
 		 	{
 				LOG("It's Scope. Moving from concrete rule: {}\n",
@@ -276,7 +308,11 @@ Print: 	"print" Expr
 		}
 
 
-Expr:	BinaryOp
+Expr:   Postfix
+        {
+			$$ = $1;
+		}
+    |   BinaryOp
 		{
 			MSG("Moving BinaryOp\n");
 			$$ = $1;
@@ -284,26 +320,6 @@ Expr:	BinaryOp
 	|	UnaryOp
 		{
 			MSG("Moving UnaryOp\n");
-			$$ = $1;
-		}
-  	| 	"(" Expr ")"
-		{
-			MSG("Moving Expression in parenthesis\n");
-			$$ = $2;
-		}
-  	| 	NUMBER
-		{
-			MSG("Initialising ConstantNode\n");
-			$$ = drv.bld.create<AST::ConstantNode>($1);
-		}
-	| 	"?"
-		{
-			MSG("Initialising InNode\n");
-			$$ = drv.bld.create<AST::InNode>();
-		}
-  	| 	Variable
-		{
-			MSG("Moving VarialeNode\n");
 			$$ = $1;
 		}
 	| Assign { $$ = $1; };
@@ -430,6 +446,112 @@ Variable: 	ID
 				$$ = drv.bld.create<AST::VariableNode>(drv.bld.intern($1));
 			};
 
+// списки аргументов
+ArgListOpt: /* empty */
+			{
+				$$ = {};
+			}
+        |   ArgList
+			{
+				$$ = std::move($1);
+			};
+
+ArgList:    Expr
+			{
+				$$ = std::vector<AST::ExpressionNode*>{ $1 };
+			}
+        |   ArgList COMMA Expr
+			{
+				$1.push_back($3);
+				$$ = std::move($1);
+			};
+
+// списки параметров
+ParamListOpt: /* empty */
+			{
+				$$ = {};
+			}
+        |   ParamList
+			{
+				$$ = std::move($1);
+			};
+
+ParamList:  ID
+			{
+				$$ = std::vector<std::string>{ $1 };
+			}
+        |   ParamList COMMA ID
+			{
+				$1.push_back($3);
+				$$ = std::move($1);
+			};
+
+// имя после двоеточия
+NameOpt:    /* empty */
+		    {
+				$$ = "";
+			}
+        |   COLON ID
+			{
+				$$ = $2;
+			};
+
+// функция-литерал
+FunctionLit: FUNC "(" ParamListOpt ")" NameOpt Scope
+			{
+			 	std::vector<std::string_view> params;
+				params.reserve($3.size());
+				for (auto& s : $3)
+					params.push_back(drv.bld.intern(s));
+
+				bool hasName = !$5.empty();
+				std::string_view fname = hasName ? drv.bld.intern($5) : std::string_view{};
+
+				$$ = drv.bld.create<AST::FunctionNode>(std::move(params), $6, fname, hasName);
+            };
+
+// атомы
+Primary:    NUMBER
+            {
+				MSG("Initialising ConstantNode\n");
+				$$ = drv.bld.create<AST::ConstantNode>($1);
+           }
+        |  "?"
+            {
+				MSG("Initialising InNode\n");
+				$$ = drv.bld.create<AST::InNode>();
+            }
+        |   Variable
+        	{
+            	MSG("Moving VariableNode\n");
+            	$$ = $1;
+        	}
+    	|  "(" Expr ")"
+			{
+				MSG("Moving Expression in parenthesis\n");
+				$$ = $2;
+			}
+        |   Scope
+			{
+				MSG("Moving Scope as expression\n");
+				$$ = $1;
+			}
+        |   FunctionLit
+			{
+				MSG("Moving Function literal\n");
+				$$ = $1;
+			};
+
+// postfix вызовы
+Postfix:    Primary
+            {
+				$$ = $1;
+			}
+    	|   Postfix "(" ArgListOpt ")"
+			{
+				MSG("Initialising CallNode\n");
+				$$ = drv.bld.create<AST::CallNode>($1, std::move($3));
+			};
 %%
 
 void yy::parser::error (const location_type& loc, const std::string& msg)
