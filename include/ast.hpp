@@ -22,11 +22,22 @@ private:
 public:
 	AST(std::ostream& out = std::cout) : ctx(out) {}
 
-    void accept(Visitor& visitor) {
-        visitor.Visit(*globalScope);
+    void accept(Visitor& visitor)
+    {
+        if (!globalScope)
+            throw std::runtime_error("AST is empty");
+        globalScope->accept(visitor);
     }
 
-    detail::Context& getCtx() { return ctx; }
+    void accept(const Visitor& visitor) const
+    {
+        if (!globalScope)
+            throw std::runtime_error("AST is empty");
+        globalScope->accept(visitor);
+    }
+
+          detail::Context& getCtx()       { return ctx; }
+    const detail::Context& getCtx() const { return ctx; }
 };
 
 } // namespace AST

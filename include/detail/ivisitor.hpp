@@ -16,6 +16,9 @@ class BinaryOpNode;
 class UnaryOpNode;
 class PrintNode;
 class ScopeNode;
+class FunctionNode;
+class CallNode;
+class ReturnNode;
 
 }
 
@@ -33,6 +36,9 @@ class Visitor {
         virtual void Visit (AST::UnaryOpNode& node)  = 0;
         virtual void Visit (AST::PrintNode& node)    = 0;
         virtual void Visit (AST::ScopeNode& node)    = 0;
+        virtual void Visit (AST::FunctionNode& node) = 0;
+        virtual void Visit (AST::CallNode& node)     = 0;
+        virtual void Visit (AST::ReturnNode& node)   = 0;
 
 
         virtual void Visit (const AST::ForNode& node)      const = 0;
@@ -46,6 +52,9 @@ class Visitor {
         virtual void Visit (const AST::UnaryOpNode& node)  const = 0;
         virtual void Visit (const AST::PrintNode& node)    const = 0;
         virtual void Visit (const AST::ScopeNode& node)    const = 0;
+        virtual void Visit (const AST::FunctionNode& node) const = 0;
+        virtual void Visit (const AST::CallNode& node)     const = 0;
+        virtual void Visit (const AST::ReturnNode& node)   const = 0;
 
         virtual ~Visitor() = default;
 

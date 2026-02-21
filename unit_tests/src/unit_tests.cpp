@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>  // for Test, TestInfo (ptr only), TEST
 #include <string>         // for basic_string
-
+#include <sstream>
+#include <variant>
 
 #include "dsl.hpp"
 #include "node.hpp"
@@ -70,7 +71,7 @@ TEST(common, bitwise_in_if)        { test_utils::run_test("/common/bitwise_in_if
 
 TEST(common, bitwise_in_while)     { test_utils::run_test("/common/bitwise_in_while");}
 
-TEST(common, bitwise_and_logical)  { test_utils::run_test("/common/bitwise_and_logical");}\
+TEST(common, bitwise_and_logical)  { test_utils::run_test("/common/bitwise_and_logical");}
 
 TEST(common, plus_assign_basic)    { test_utils::run_test("/common/plus_assign_basic"); }
 
@@ -86,7 +87,17 @@ TEST(common, slash_assign_basic)   { test_utils::run_test("/common/slash_assign_
 
 TEST(common, assign_combo)         { test_utils::run_test("/common/assign_combo"); }
 
-TEST(common, chain)         { test_utils::run_test("/common/chain"); }
+TEST(common, chain)                { test_utils::run_test("/common/chain"); }
+
+TEST(common, func_basic)           { test_utils::run_test("/common/func_basic"); }
+
+TEST(common, func_return)          { test_utils::run_test("/common/func_return"); }
+
+TEST(common, scope_value)          { test_utils::run_test("/common/scope_value"); }
+
+TEST(common, func_closure)         { test_utils::run_test("/common/func_closure"); }
+
+TEST(common, func_recursion)       { test_utils::run_test("/common/func_recursion"); }
 
 TEST(ASTTestBase, CreateConstant)
 {
@@ -309,9 +320,6 @@ TEST(ASTTestBase, CreateAssignmentNode)
     ASSERT_NE(assignmentNode, nullptr);
 
     AST::detail::Context ctx;
-    ctx.varTables_.emplace_back();
-    ctx.curScope_ = 0;
-
 
     int result = TestUtils::evaluate(*assignmentNode, ctx);
 
@@ -329,16 +337,14 @@ TEST(ASTTestBase, WhileNode_ConditionTrue)
 
     // Initialize context with x = 0
     AST::detail::Context ctx;
-    ctx.varTables_.emplace_back();
-    ctx.varTables_[0]["x"] = 0;  // Set initial value of x
-    ctx.curScope_ = 0;
+    ctx.assign("x", 0);
 
     // Evaluate the while loop
 
     TestUtils::evaluate(*whileNode, ctx);
 
     // After the loop, x should be 10
-    EXPECT_EQ(ctx.varTables_[0]["x"], 10);
+    EXPECT_EQ(std::get<int>(ctx.get_or_throw("x")), 10);
 }
 
 TEST(ASTTestBase, IfNode_TrueCondition)
@@ -353,15 +359,13 @@ TEST(ASTTestBase, IfNode_TrueCondition)
 
     // Initialize context with x = 10
     AST::detail::Context ctx;
-    ctx.varTables_.emplace_back();
-    ctx.varTables_[0]["x"] = 10;
-    ctx.curScope_ = 0;
+    ctx.assign("x", 10);
 
     // Evaluate the if statement
     TestUtils::evaluate(*ifNode, ctx);
 
     // After the if statement, y should be 20
-    EXPECT_EQ(ctx.varTables_[0]["y"], 20);
+    EXPECT_EQ(std::get<int>(ctx.get_or_throw("y")), 20);
 }
 
 
@@ -376,18 +380,18 @@ TEST(ASTTestBase, IfNode_FalseCondition)
 
     // Initialize context with x = 5 (condition will be false)
     AST::detail::Context ctx;
-    ctx.varTables_.emplace_back();
-    ctx.varTables_[0]["x"] = 5;
-    ctx.curScope_ = 0;
+    ctx.assign("x", 5);
 
     // Evaluate the if statement
     TestUtils::evaluate(*ifNode, ctx);
 
     // After the if statement, y should not be assigned, it should not exist in the context
-    EXPECT_EQ(ctx.varTables_[0].count("y"), 0);
+    AST::detail::Value outValue;
+    EXPECT_FALSE(ctx.try_get("y", outValue));
 }
 
-TEST(ASTTestBase, PrintNode) {
+TEST(ASTTestBase, PrintNode)
+{
     // Create a print statement: print(x)
     auto printNode = AST::print(AST::variable("x"));
 
@@ -398,9 +402,7 @@ TEST(ASTTestBase, PrintNode) {
     AST::detail::Context ctx(ss);
 
     // Initialize context with x = 42
-    ctx.varTables_.emplace_back();
-    ctx.varTables_[0]["x"] = 42;
-    ctx.curScope_ = 0;
+    ctx.assign("x", 42);
 
     // Evaluate the print statement
     TestUtils::evaluate(*printNode, ctx);
@@ -409,7 +411,7 @@ TEST(ASTTestBase, PrintNode) {
     EXPECT_EQ(ss.str(), "42\n");
 }
 
-TEST(ASTTestBase, InNode) // TODO
+TEST(ASTTestBase, InNode)
 {
     std::string simulated_input = "42";
     std::istringstream input_stream(simulated_input);
@@ -424,12 +426,11 @@ TEST(ASTTestBase, InNode) // TODO
     ASSERT_NE(assignmentNode, nullptr);
 
     AST::detail::Context ctx;
-    ctx.varTables_.emplace_back();
-    ctx.curScope_ = 0;
 
     int result = TestUtils::evaluate(*assignmentNode, ctx);
-
     EXPECT_EQ(result, 42);
+
+    EXPECT_EQ(std::get<int>(ctx.get_or_throw("x")), 42);
 }
 
 TEST(ASTTestBase, ForNode_SimpleCount)
@@ -447,12 +448,11 @@ TEST(ASTTestBase, ForNode_SimpleCount)
     auto forNode = AST::for_stmt(init, cond, iter, body);
 
     AST::detail::Context ctx;
-    ctx.varTables_.emplace_back();
-    ctx.varTables_[0]["y"] = 0;
-    ctx.curScope_ = 0;
+    ctx.assign("y", 0);
+
     TestUtils::evaluate(*forNode, ctx);
 
-    EXPECT_EQ(ctx.varTables_[0]["y"], 3);
+    EXPECT_EQ(std::get<int>(ctx.get_or_throw("y")), 3);
 }
 
 TEST(ASTTestBase, BinaryOpANDTruthTable)

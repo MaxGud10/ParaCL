@@ -1,13 +1,8 @@
 #pragma once
 
 #include <cmath>
-#include <cstdint>
-#include <stdexcept>
 #include <vector>
-#include <iostream>
 #include <string_view>
-#include <ranges>
-#include <algorithm>
 
 #include "detail/context.hpp"
 #include "detail/inode.hpp"
@@ -30,23 +25,17 @@ using ExprPtr     = ExpressionNode*;
 using StmtPtr     = StatementNode*;
 using CondStmtPtr = ConditionalStatementNode*;
 
-class ScopeNode final : public StatementNode
+class ScopeNode final : public ExpressionNode
 {
 private:
     std::vector<StmtPtr> children_;
 
 public:
-
     explicit ScopeNode(std::vector<StmtPtr> stms)
         : children_(std::move(stms)) {}
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
     void push_child(StmtPtr&& stmt)
     {
@@ -54,7 +43,6 @@ public:
     }
 
 	size_t nstms() const { return children_.size(); }
-
 
 public:
     const std::vector<StmtPtr> &get_children() const { return children_; }
@@ -69,19 +57,11 @@ public:
 
     explicit ConstantNode(int val) : val_(val) {}
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
-    int get_val() const {
-        return val_;
-    }
-
+    int get_val() const {return val_;}
 };
 
 class VariableNode final : public ExpressionNode
@@ -92,13 +72,8 @@ private:
 public:
 	explicit VariableNode(std::string_view name): name_(name) {}
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
     std::string_view get_name() const { return name_; }
@@ -115,13 +90,8 @@ public:
     BinaryOpNode(ExpressionNode* left, BinaryOp op, ExpressionNode* right)
         : left_(left), right_(right), op_(op) {}
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
     const ExprPtr  get_left()  const { return left_;  }
@@ -139,13 +109,8 @@ public:
     UnaryOpNode(ExprPtr operand, UnaryOp op)
         : operand_(operand), op_(op) {}
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
     const ExprPtr get_operand() const { return operand_; }
@@ -162,13 +127,8 @@ public:
     AssignNode(VariableNode* dest, ExprPtr expr)
         : dest_(dest), expr_(expr) {}
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
     const VariableNode* get_dest() const { return dest_; }
@@ -185,13 +145,8 @@ public:
     WhileNode(ExprPtr cond, StmtPtr scope)
         : cond_(cond), scope_(scope) {}
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
     const ExprPtr get_cond()  const { return cond_; }
@@ -215,13 +170,8 @@ public:
           iter_(iter),
           body_(body) {}
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
     const AssignPtr get_init() const { return init_; }
@@ -243,13 +193,8 @@ public:
           action_     (action),
           else_action_(else_action) {}
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    void accept(      Visitor& visitor) override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
     const ExprPtr get_cond()        const { return cond_;        }
@@ -265,13 +210,8 @@ private:
 public:
     explicit PrintNode(ExprPtr expr) : expr_(expr) {}
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
     const ExprPtr get_expr() const { return expr_; }
@@ -280,20 +220,68 @@ public: // getters
 class InNode final : public ExpressionNode
 {
 public:
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
+};
 
-    void accept(Visitor& visitor) override {
-        visitor.Visit(*this);
-    }
+class FunctionNode final : public ExpressionNode
+{
+    std::vector<std::string_view> params_;
+    ScopeNode*                    body_;
+    std::string_view              internalName_{};
 
-    void accept(const Visitor& visitor) const override {
-        visitor.Visit(*this);
-    }
+    bool                          hasInternalName_{false};
+
+public:
+    FunctionNode(std::vector<std::string_view> params, ScopeNode* body,
+                 std::string_view internalName = {}, bool hasInternalName = false)
+        : params_         (std::move(params)),
+          body_           (body),
+          internalName_   (internalName),
+          hasInternalName_(hasInternalName) {}
+
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
+
+public:
+    const auto&      get_params()        const { return params_;          }
+    ScopeNode*       get_body()          const { return body_;            }
+    bool             has_internal_name() const { return hasInternalName_; }
+    std::string_view get_internal_name() const { return internalName_;    }
+};
+
+
+class CallNode final : public ExpressionNode
+{
+    ExprPtr              callee_;
+    std::vector<ExprPtr> args_;
+public:
+    CallNode(ExprPtr callee, std::vector<ExprPtr> args)
+        : callee_(callee), args_(std::move(args)) {}
+
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
+
+public:
+          ExprPtr get_callee() const { return callee_; }
+    const auto&   get_args()   const { return args_;   }
+};
+
+class ReturnNode final : public StatementNode
+{
+    ExprPtr expr_ = nullptr;
+public:
+    explicit ReturnNode(ExprPtr expr = nullptr) : expr_(expr) {}
+
+    void accept(      Visitor& visitor)       override {visitor.Visit(*this); }
+    void accept(const Visitor& visitor) const override {visitor.Visit(*this); }
+
+    ExprPtr get_expr() const { return expr_; }
 };
 
 class VoidNode final : public ExpressionNode
 {
-    void accept(Visitor& visitor) override {}
-
+    void accept(      Visitor& visitor)       override {}
     void accept(const Visitor& visitor) const override {}
 };
 

@@ -1,0 +1,6 @@
+make = func(a) {
+  func(x) { x + a; };
+};
+
+add5 = make(5);
+print add5(10);
