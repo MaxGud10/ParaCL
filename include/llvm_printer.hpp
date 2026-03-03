@@ -93,7 +93,7 @@ class LLVMPrinter : public Visitor {
         llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(context, "if.merge", curFunc);
 
         // creating condition
-        n.get_cond()->accept(*this);
+        n.get_cond()->accept(*this);ls
         llvm::Value* condValue = curVal;
         builder.CreateCondBr(condValue, thenBB, elseBB);
 
