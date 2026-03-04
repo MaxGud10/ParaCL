@@ -531,10 +531,10 @@ Primary:    NUMBER
 				MSG("Moving Expression in parenthesis\n");
 				$$ = $2;
 			}
-        |   Scope
+        |   "(" Scope ")"
 			{
 				MSG("Moving Scope as expression\n");
-				$$ = $1;
+				$$ = $2;
 			}
         |   FunctionLit
 			{

@@ -15,6 +15,8 @@ namespace test_utils
 namespace detail
 {
 
+std::string get_result(std::string_view file_name);
+
 std::string get_result(std::string_view file_name)
 {
     int status = 0;

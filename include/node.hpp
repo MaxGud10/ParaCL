@@ -94,9 +94,9 @@ public:
     void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
-    const ExprPtr  get_left()  const { return left_;  }
-    const ExprPtr  get_right() const { return right_; }
-    const BinaryOp get_op()    const { return op_;    }
+    ExprPtr  get_left()  const { return left_;  }
+    ExprPtr  get_right() const { return right_; }
+    BinaryOp get_op()    const { return op_;    }
 };
 
 class UnaryOpNode final : public ExpressionNode
@@ -113,8 +113,8 @@ public:
     void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
-    const ExprPtr get_operand() const { return operand_; }
-    const UnaryOp get_op()      const { return op_;      }
+    ExprPtr get_operand() const { return operand_; }
+    UnaryOp get_op()      const { return op_;      }
 };
 
 class AssignNode final : public ExpressionNode
@@ -131,8 +131,8 @@ public:
     void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
-    const VariableNode* get_dest() const { return dest_; }
-    const ExprPtr       get_expr() const { return expr_; }
+    VariableNode* get_dest() const { return dest_; }
+    ExprPtr       get_expr() const { return expr_; }
 };
 
 class WhileNode final : public ConditionalStatementNode
@@ -149,8 +149,8 @@ public:
     void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
-    const ExprPtr get_cond()  const { return cond_; }
-    const StmtPtr get_scope() const {return scope_; }
+    ExprPtr get_cond()  const { return cond_; }
+    StmtPtr get_scope() const {return scope_; }
 };
 
 using AssignPtr = AssignNode*;
@@ -174,10 +174,10 @@ public:
     void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
-    const AssignPtr get_init() const { return init_; }
-    const ExprPtr   get_cond() const { return cond_; }
-    const AssignPtr get_iter() const { return iter_; }
-    const StmtPtr   get_body() const { return body_; }
+    AssignPtr get_init() const { return init_; }
+    ExprPtr   get_cond() const { return cond_; }
+    AssignPtr get_iter() const { return iter_; }
+    StmtPtr   get_body() const { return body_; }
 };
 
 class IfNode final : public ConditionalStatementNode
@@ -197,9 +197,9 @@ public:
     void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
-    const ExprPtr get_cond()        const { return cond_;        }
-    const StmtPtr get_action()      const { return action_;      }
-    const StmtPtr get_else_action() const { return else_action_; }
+    ExprPtr get_cond()        const { return cond_;        }
+    StmtPtr get_action()      const { return action_;      }
+    StmtPtr get_else_action() const { return else_action_; }
 };
 
 class PrintNode final : public StatementNode
@@ -214,7 +214,7 @@ public:
     void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
 
 public: // getters
-    const ExprPtr get_expr() const { return expr_; }
+    ExprPtr get_expr() const { return expr_; }
 };
 
 class InNode final : public ExpressionNode

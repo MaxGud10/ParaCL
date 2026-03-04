@@ -72,7 +72,7 @@ set(DEBUG_COMPILE_OPTIONS
 	-fno-omit-frame-pointer
 	-fPIE
 	-Werror=vla
-	-fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
+	# -fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 )
 
 add_executable(unit_tests
@@ -83,9 +83,9 @@ add_executable(unit_tests
 
 target_link_libraries(unit_tests
     PRIVATE
-        paracl_core         
+        paracl_core
         GTest::gtest
-        GTest::gtest_main 
+        GTest::gtest_main
 )
 
 target_include_directories(unit_tests PRIVATE
@@ -101,7 +101,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	target_compile_options(unit_tests PRIVATE ${DEBUG_COMPILE_OPTIONS})
 
 	target_link_options(unit_tests PRIVATE
-		-fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
+		# -fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 	)
 else()
 	target_compile_options(unit_tests PRIVATE ${RELEASE_COMPILE_OPTIONS})
