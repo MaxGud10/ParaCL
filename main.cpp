@@ -2,6 +2,8 @@
 #include <chrono>
 #include <cstring>
 #include <fstream>
+#include <exception>
+#include <iostream>
 
 #include "ast.hpp"
 #include "driver.hpp"
@@ -37,64 +39,78 @@ std::string generateFileName(std::string_view prefix = "dot", std::string_view e
 
 int main(int argc, char **argv)
 {
-    MSG("MACROSES:\n");
-    LOG("YYDEBUG: {}\n", YYDEBUG);
-    LOG("YY_FLEX_DEBUG: {}\n", YY_FLEX_DEBUG);
-
-    int status = 0;
-
-    Driver drv;
-
-    if (argc == 1)
-        status = drv.parse("-");
-    else
+    try
     {
-        for (int i = 1; i < argc; ++i)
+        MSG("MACROSES:\n");
+        LOG("YYDEBUG: {}\n", YYDEBUG);
+        LOG("YY_FLEX_DEBUG: {}\n", YY_FLEX_DEBUG);
+
+        int status = 0;
+        Driver drv;
+
+        if (argc == 1)
+            status = drv.parse("-");
+        else
         {
-            if (strcmp("--dump", argv[i]))
+            for (int i = 1; i < argc; ++i)
             {
-                status = drv.parse(argv[i]);
-                if (status != 0)
-                    break;
+                if (strcmp("--dump", argv[i]))
+                {
+                    status = drv.parse(argv[i]);
+                    if (status != 0)
+                        break;
+                }
             }
         }
-    }
 
-    TreeTraverse traverse(drv.ast.getCtx());
+        if (status != 0 || drv.ast.globalScope == nullptr)
+        {
+            std::cerr << "Parsing failed or AST not created" << std::endl;
+            return status != 0 ? status : 1;
+        }
 
-    if (status == 0 && drv.ast.globalScope != nullptr)
-    {
+        TreeTraverse traverse(drv.ast.getCtx());
+
         LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
 
         if (drv.ast.globalScope->nstms() > 0)
             drv.ast.accept(traverse);
-    }
-    else
-    {
-        std::cerr << "Parsing failed or AST not created" << std::endl;
-        return status != 0 ? status : 1;
-    }
 
-
-    // handling dump flag
-    for (int i = 0; i < argc; ++i)
-    {
-        if (!strcmp(argv[i], "--dump"))
+        // handling dump flag
+        for (int i = 0; i < argc; ++i)
         {
-            std::string fileName = generateFileName();
-            std::cout << "generatedfileName" << fileName << std::endl;
-            std::ofstream outFile(fileName);
-            if (outFile.is_open())
+            if (!strcmp(argv[i], "--dump"))
             {
-                DotPrinter printer(outFile);
-                std::cout << "AAAAA" << std::endl;
-                drv.ast.accept(printer);
-                std::cout << "dumped" << std::endl;
-                // outFile.close();
+                std::string fileName = generateFileName();
+                std::cout << "generatedfileName" << fileName << std::endl;
+
+                std::ofstream outFile(fileName);
+                if (outFile.is_open())
+                {
+                    DotPrinter printer(outFile);
+                    drv.ast.accept(printer);
+                    std::cout << "dumped" << std::endl;
+                }
+                else
+                {
+                    std::cerr << "Failed to open dump file: " << fileName << std::endl;
+                    return 3;
+                }
+
                 return status;
             }
         }
-    }
 
-    return status;
+        return status;
+    }
+    catch (const std::exception& exception)
+    {
+        std::cerr << "Runtime error: " << exception.what() << std::endl;
+        return 2;
+    }
+    catch (...)
+    {
+        std::cerr << "Runtime error: unknown exception" << std::endl;
+        return 2;
+    }
 }

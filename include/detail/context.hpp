@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <cstddef>
 
 #include "value.hpp"
 #include "log.h"
@@ -21,6 +22,9 @@ public:
 
     std::ostream& out;
     FramePtr      current_;
+
+    std::size_t callDepth_    = 0;
+    std::size_t maxCallDepth_ = 1000;
 
 public:
     explicit Context(std::ostream& outputStream = std::cout)
@@ -124,6 +128,26 @@ public:
             ++depthValue;
         return depthValue;
     }
+
+    void enter_call()
+    {
+        ++callDepth_;
+        if (callDepth_ > maxCallDepth_)
+            throw std::runtime_error("Maximum recursion depth exceeded ("   +
+                                        std::to_string(callDepth_   ) + "/" +
+                                        std::to_string(maxCallDepth_) + ")");
+    }
+
+    void exit_call()
+    {
+        if (callDepth_ > 0)
+            --callDepth_;
+    }
+
+    std::size_t get_call_depth()     const { return callDepth_;    }
+    std::size_t get_max_call_depth() const { return maxCallDepth_; }
+
+    void set_max_call_depth(std::size_t newLimit) { maxCallDepth_ = newLimit; }
 };
 
 } // namespace detail
