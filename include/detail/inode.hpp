@@ -82,6 +82,10 @@ inline constexpr std::array<std::string_view, numUnaryOp> UnaryOpNames =
 class INode
 {
 public:
+<<<<<<< HEAD
+=======
+
+>>>>>>> ed29d92 (решаю конфликты)
     virtual void accept(Visitor& visitor) = 0;
     virtual void accept(const Visitor& visitor) const = 0;
     virtual ~INode() = default;
