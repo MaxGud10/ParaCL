@@ -9,6 +9,7 @@ set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/")
 add_definitions(-DTEST_DATA_DIR=\"${TEST_DATA_DIR}\")
 
 find_package(GTest REQUIRED CONFIG)
+find_package(LLVM REQUIRED CONFIG)
 
 set(RELEASE_COMPILE_OPTIONS
 	-O2
@@ -80,13 +81,24 @@ add_executable(unit_tests
     main.cpp
 )
 
+set(LLVM_LINK_COMPONENTS
+    Support
+    Core
+)
+
+llvm_map_components_to_libnames(llvm_libs ${LLVM_LINK_COMPONENTS})
+
 
 target_link_libraries(unit_tests
     PRIVATE
         paracl_core
         GTest::gtest
         GTest::gtest_main
+		${llvm_libs}
 )
+
+include_directories(${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
 
 target_include_directories(unit_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/test_utils

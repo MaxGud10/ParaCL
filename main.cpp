@@ -8,6 +8,7 @@
 #include "log.h"
 #include "inode.hpp"
 #include "dot_printer.hpp"
+#include "llvm_printer.hpp"
 #include "tree_traverse.hpp"
 
 constexpr std::string_view DUMP_DIR = "./dumps/";

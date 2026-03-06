@@ -196,6 +196,14 @@ public:
     }
 
 
+
+    void Visit(const AST::ConditionalStatementNode& node) const override {}
+    void Visit(const AST::StatementNode& node) const override {}
+    void Visit(const AST::ExpressionNode& node) const override {}
+
+    void Visit (AST::StatementNode& node)           override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit (AST::ExpressionNode& node)          override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(AST::ConditionalStatementNode& node) override {throw std::runtime_error("TreeTraverse::Visit const not implemented");  }
     void Visit(AST::ForNode&      node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
     void Visit(AST::ConstantNode& node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
     void Visit(AST::AssignNode&   node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
