@@ -34,18 +34,18 @@ class LLVMPrinter : public Visitor {
 
         llvm::Value* curVal = nullptr;
 
-    void Visit(const AST::ConstantNode& n) const override {
+    void Visit(AST::ConstantNode& n) override {
         auto&& currentValue = llvm::ConstantInt::get(
             context,
-            llvm::APInt(32, n.get_val(), true);
+            llvm::APInt(32, n.get_val(), true)
         );
     }
 
-    void Visit(const AST::VariableNode& n) const override {
+    void Visit(AST::VariableNode& n) override {
         llvm::AllocaInst* allocated_val = nullptr;
 
         for (auto&& it = symbolScopes.rbegin(), end = symbolScopes.rend(); it != end; ++it) {
-            auto&& found = it->find(n.get_name());
+            auto&& found = it->find(std::string(n.get_name()));
             if (found != it->end()) {
                 allocated_val = found->second;
                 break;
@@ -53,8 +53,8 @@ class LLVMPrinter : public Visitor {
 
         }
 
-        if (!allocated_value) {
-            throw std::runtime_error("Unknown value:" + n.get_name() + ":(");
+        if (!allocated_val) {
+            throw std::runtime_error("Unknown value: " + std::string(n.get_name()) + ":(");
         }
 
         curVal = builder.CreateLoad( // <-----------------------------------------------------------]
@@ -64,7 +64,7 @@ class LLVMPrinter : public Visitor {
         );                                                                                  //      |
     }                                                                                       //      |
                                                                                             //      |
-    void Visit(const AST::AssignNode& n) const override {                                   //      |
+    void Visit(AST::AssignNode& n) override {                                   //      |
         n.get_expr()->accept(*this);                                                        //      |
         auto&& expr = curVal;                                                               //      |
                                                                                             //      |
@@ -72,19 +72,19 @@ class LLVMPrinter : public Visitor {
         curVal = expr;
     }
 
-    void Visit(const AST::ExpressionNode& n) const override {
+    void Visit(AST::ExpressionNode& n) override {
         n.accept(*this);
     }
 
-    void Visit(const AST::StatementNode& n) const override {
+    void Visit(AST::StatementNode& n) override {
         n.accept(*this);
     }
 
-    void Visit(const AST::ConditionalStatementNode& n) const override {
+    void Visit(AST::ConditionalStatementNode& n) override {
         n.accept(*this);
     }
 
-    void Visit(const AST::IfNode& n) const override {
+    void Visit(AST::IfNode& n) override {
         llvm::Function* curFunc = builder.GetInsertBlock()->getParent();
 
         // creating if diamond //
@@ -93,7 +93,7 @@ class LLVMPrinter : public Visitor {
         llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(context, "if.merge", curFunc);
 
         // creating condition
-        n.get_cond()->accept(*this);ls
+        n.get_cond()->accept(*this);
         llvm::Value* condValue = curVal;
         builder.CreateCondBr(condValue, thenBB, elseBB);
 
@@ -117,7 +117,7 @@ class LLVMPrinter : public Visitor {
     }
 
 
-    void Visit(const AST::BinaryOpNode& n) const override {
+    void Visit(AST::BinaryOpNode& n) override {
         n.get_left()->accept(*this);
         auto&& left = curVal;
 
@@ -139,7 +139,7 @@ class LLVMPrinter : public Visitor {
                 break;
 
             case AST::BinaryOp::BIT_AND:
-                curVal = builder.CreateAnd(left, right, "bit_and")
+                curVal = builder.CreateAnd(left, right, "bit_and");
                 break;
 
             case AST::BinaryOp::OR:
@@ -188,9 +188,14 @@ class LLVMPrinter : public Visitor {
                 break;
 
             default:
-                throw std::runtime_error("Undefined binary op" + n.get_op());
+                throw std::runtime_error("Undefined binary op :(");
 
         }
+    }
+
+    void Visit(AST::ForNode& n) override {
+
+
     }
 
 };

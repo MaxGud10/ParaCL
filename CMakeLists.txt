@@ -91,6 +91,7 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/parser)
 
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
+find_package(LLVM REQUIRED CONFIG)
 
 set(BISON_INPUT ${CMAKE_SOURCE_DIR}/grammar/parser.y)
 set(FLEX_INPUT ${CMAKE_SOURCE_DIR}/grammar/lexer.l)
@@ -139,7 +140,19 @@ add_executable(paracl main.cpp)
 target_compile_features(paracl PRIVATE cxx_std_20)
 set_target_properties(paracl PROPERTIES CXX_EXTENSIONS OFF)
 
-target_link_libraries(paracl PRIVATE paracl_core)
+set(LLVM_LINK_COMPONENTS
+    Support
+    Core
+)
+
+llvm_map_components_to_libnames(llvm_libs ${LLVM_LINK_COMPONENTS})
+
+
+target_link_libraries(paracl
+	PRIVATE
+		paracl_core
+		${llvm_libs}
+		)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(paracl PRIVATE DEBUG)
@@ -163,6 +176,8 @@ target_include_directories(paracl PRIVATE
     ${CMAKE_BINARY_DIR}/parser
 	${CMAKE_SOURCE_DIR}/utils
 )
+include_directories(${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
 
 if(ENABLE_LOGGING)
     target_compile_definitions(paracl PRIVATE ENABLE_LOGGING)
