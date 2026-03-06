@@ -29,10 +29,9 @@ public: /* members */
 	AST::AST		                       ast;
 	AST::NodeBuilder                       bld;
 	std::vector<std::vector<AST::StmtPtr>> stm_table;
-	// size_t                                 cur_scope_id = 0;
 
 public:
-  	Driver(std::ostream& out = std::cout) :	ast(out)
+  	Driver(std::ostream &out = std::cout) :	ast(out)
 	{
 		stm_table.push_back(std::vector<AST::StmtPtr>());
 	}

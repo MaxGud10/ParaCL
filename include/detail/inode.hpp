@@ -83,10 +83,14 @@ class INode
 {
 public:
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> ed29d92 (решаю конфликты)
     virtual void accept(Visitor& visitor) = 0;
+=======
+    virtual void accept(      Visitor& visitor)       = 0;
+>>>>>>> 7b7d2de (добавил реализацию функций)
     virtual void accept(const Visitor& visitor) const = 0;
     virtual ~INode() = default;
 
