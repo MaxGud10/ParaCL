@@ -30,10 +30,10 @@ struct Frame
 
 struct Function
 {
-    std::vector<Name> params;
-    AST::ScopeNode   *body = nullptr;
-    FramePtr          env{};
-    Name              internalName{};
+    std::vector<Name>     params;
+    AST::ScopeNode       *body = nullptr;
+    std::weak_ptr<Frame>  env{};
+    Name                  internalName{};
 
     bool hasInternalName = false;
 };

@@ -78,7 +78,7 @@ python3 -m venv .venv && source .venv/bin/activate && pip3 install conan
 ```
 2. Установим зависимости проекта с помощью Conan:
 ```bash
-conan install . --output-folder=third_party --build=missing -s build=Debug
+conan install . --output-folder=third_party --build=missing -s build_type=Debug
 ```
 3. Создаем проект
 ```bash

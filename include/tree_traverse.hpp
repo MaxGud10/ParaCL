@@ -406,9 +406,13 @@ public:
         if (evaluatedArguments.size() != functionObject->params.size())
             throw std::runtime_error("Arity mismatch in function call");
 
-        auto savedFrame   = ctx_.current_;
-        auto callFrame    = std::make_shared<AST::detail::Frame>();
-        callFrame->parent = functionObject->env;
+
+        auto capturedEnvironment = functionObject->env.lock();
+        if (!capturedEnvironment)
+            throw std::runtime_error("Function environment expired");
+
+        auto savedFrame = ctx_.current_;
+        auto callFrame  = ctx_.create_frame(capturedEnvironment);
 
         for (size_t index = 0; index < evaluatedArguments.size(); ++index)
         {

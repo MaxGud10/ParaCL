@@ -20,8 +20,9 @@ public:
     using Name  = AST::detail::Name;
     using Frame = AST::detail::Frame;
 
-    std::ostream& out;
-    FramePtr      current_;
+    std::ostream&         out;
+    FramePtr              current_;
+    std::vector<FramePtr> frames_pool_;
 
     std::size_t callDepth_    = 0;
     std::size_t maxCallDepth_ = 1000;
@@ -30,25 +31,14 @@ public:
     explicit Context(std::ostream& outputStream = std::cout)
         : out(outputStream)
     {
-        current_ = std::make_shared<Frame>();
-        current_->parent = nullptr;
+        current_ = create_frame(nullptr);
 
         LOG("CTX: init root frame ptr={}\n", static_cast<const void*>(current_.get()));
     }
 
     void push_scope()
     {
-        auto newFrame = std::make_shared<Frame>();
-             newFrame->parent = current_;
-
-        LOG("CTX: push_scope: old={} new={} depth_before={}\n",
-            static_cast<const void*>(current_.get()),
-            static_cast<const void*>(newFrame.get()),
-            depth());
-
-        current_ = std::move(newFrame);
-
-        LOG("CTX: push_scope: depth_after={}\n", depth());
+        current_ = create_frame(current_);
     }
 
     void pop_scope()
@@ -119,6 +109,15 @@ public:
 
         LOG("CTX: get name='{}' NOT FOUND\n", name);
         return false;
+    }
+
+    FramePtr create_frame(FramePtr parent)
+    {
+        auto frame    = std::make_shared<Frame>();
+        frame->parent = std::move(parent);
+        frames_pool_.push_back(frame);
+
+        return frame;
     }
 
     int depth() const
