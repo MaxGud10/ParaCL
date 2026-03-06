@@ -48,7 +48,7 @@ inline std::string get_answer(std::string_view file_name)
     if (!answer_file.is_open())
     {
         LOG("Can't open {}\n", file_name);
-        throw;
+        throw std::runtime_error("Can't open answer file: " + std::string(file_name));
     }
 
     std::string answer((std::istreambuf_iterator<char>(answer_file)), std::istreambuf_iterator<char>());
@@ -60,16 +60,6 @@ inline std::string get_answer(std::string_view file_name)
 
 }; // namespace detail
 
-// inline void run_test(const std::string &test_name)
-// {
-//     std::string test_folder = "data";
-//     std::string test_path   = std::string(TEST_DATA_DIR) + test_folder + test_name;
-
-//     std::string result = detail::get_result(test_path + ".dat");
-//     std::string answer = detail::get_answer(test_path + ".ans");
-
-//     EXPECT_EQ(result, answer);
-// }
 
 inline void run_test(const std::string &test_name)
 {

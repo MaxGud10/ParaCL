@@ -8,7 +8,6 @@ find_package(GTest REQUIRED CONFIG)
 set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/")
 add_definitions(-DTEST_DATA_DIR=\"${TEST_DATA_DIR}\")
 
-find_package(GTest REQUIRED CONFIG)
 find_package(LLVM REQUIRED CONFIG)
 
 set(RELEASE_COMPILE_OPTIONS
@@ -25,7 +24,6 @@ set(RELEASE_COMPILE_OPTIONS
 	-Wcast-align
 	-Wpointer-arith
 	-Wunreachable-code
-	-Wno-pre-c++17-compat
 )
 
 set(DEBUG_COMPILE_OPTIONS
@@ -80,14 +78,12 @@ add_executable(unit_tests
     src/unit_tests.cpp
     main.cpp
 )
-
 set(LLVM_LINK_COMPONENTS
     Support
     Core
 )
 
 llvm_map_components_to_libnames(llvm_libs ${LLVM_LINK_COMPONENTS})
-
 
 target_link_libraries(unit_tests
     PRIVATE
