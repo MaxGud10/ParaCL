@@ -22,8 +22,11 @@
 // JIT FOR FUTURE
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 
+
+llvm::Value* createLLVMBinaryOp(AST::BinaryOp& op, llvm::Value* left, llvm::Value* right);
+
 class LLVMPrinter : public Visitor {
-    private:
+private:
         llvm::LLVMContext& context;
         llvm::IRBuilder<> builder;
         std::unique_ptr<llvm::Module> module;
@@ -34,8 +37,9 @@ class LLVMPrinter : public Visitor {
 
         llvm::Value* curVal = nullptr;
 
+public: // visitors
     void Visit(AST::ConstantNode& n) override {
-        auto&& currentValue = llvm::ConstantInt::get(
+        curVal = llvm::ConstantInt::get(
             context,
             llvm::APInt(32, n.get_val(), true)
         );
@@ -60,28 +64,16 @@ class LLVMPrinter : public Visitor {
         curVal = builder.CreateLoad( // <-----------------------------------------------------------]
             allocated_val->getAllocatedType(),                                              //      |
             allocated_val,                                                                  //      |
-            n.get_name()                                                                    //      |
+            n.get_name() //NOTE - issue with ssa-form?                                      //      |
         );                                                                                  //      |
     }                                                                                       //      |
                                                                                             //      |
-    void Visit(AST::AssignNode& n) override {                                   //      |
+    void Visit(AST::AssignNode& n) override {                                               //      |
         n.get_expr()->accept(*this);                                                        //      |
         auto&& expr = curVal;                                                               //      |
                                                                                             //      |
-        n.get_dest()->accept(*this); // <- here curVal gets a pointer to our value created here  ->|
+        n.get_dest()->accept(*this); // <- here curVal gets a pointer to our value created here   ->|
         curVal = expr;
-    }
-
-    void Visit(AST::ExpressionNode& n) override {
-        n.accept(*this);
-    }
-
-    void Visit(AST::StatementNode& n) override {
-        n.accept(*this);
-    }
-
-    void Visit(AST::ConditionalStatementNode& n) override {
-        n.accept(*this);
     }
 
     void Visit(AST::IfNode& n) override {
@@ -124,7 +116,106 @@ class LLVMPrinter : public Visitor {
         n.get_right()->accept(*this);
         auto&& right = curVal;
 
-        switch (n.get_op()) {
+        curVal = createLLVMBinaryOp(n.get_op(), left, right);
+    }
+
+
+    void Visit(AST::ForNode& n) override {
+        llvm::Function* curFunc = builder.GetInsertBlock()->getParent();
+
+        // creating for diamond // i manually copied it from llvm ir c for translation (all credits to godbolt) ;)
+        llvm::BasicBlock* initBB = llvm::BasicBlock::Create(context, "for.init", curFunc);
+        llvm::BasicBlock* condBB = llvm::BasicBlock::Create(context, "for.cond", curFunc);
+        llvm::BasicBlock* bodyBB = llvm::BasicBlock::Create(context, "for.body", curFunc);
+        llvm::BasicBlock* incBB = llvm::BasicBlock::Create(context, "for.inc", curFunc);
+        llvm::BasicBlock* endBB = llvm::BasicBlock::Create(context, "for.end", curFunc);
+
+        n.get_init()->accept(*this);
+        builder.CreateBr(condBB);
+
+        builder.SetInsertPoint(condBB);
+        n.get_cond()->accept(*this);
+        llvm::Value* condValue = curVal;
+        builder.CreateCondBr(condValue, bodyBB, endBB);
+
+        builder.SetInsertPoint(bodyBB);
+        n.get_body()->accept(*this);
+        builder.CreateBr(incBB);
+
+        builder.SetInsertPoint(incBB);
+        n.get_iter()->accept(*this);
+        builder.CreateBr(condBB);
+
+        builder.SetInsertPoint(endBB);
+    }
+
+    void Visit(AST::CallNode& n) override {
+        n.get_callee()->accept(*this);
+        llvm::Value* calleeValue = curVal;
+
+        std::vector<llvm::Value*> values;
+        for (auto&& arg : n.get_args()) {
+            arg->accept(*this);
+            values.push_back(curVal);
+        }
+
+        //NOTE - dyn_cast - debatable
+        llvm::Function* func = llvm::dyn_cast<llvm::Function>(calleeValue);
+        if (!func) {
+            //NOTE - is it the best path to throw an exception ?
+            throw std::runtime_error("Can't dyn_cast calleeValue to llvm::Function");
+            return;
+        }
+
+        llvm::CallInst* call = builder.CreateCall(func, values);
+        curVal = call;
+    }
+
+    void Visit(AST::ScopeNode& n) override {
+
+        pushScope();
+
+        for (auto&& stmt : n.get_children()) {
+            stmt->accept(*this);
+        }
+
+        popScope();
+
+    }
+
+    void Visit(AST::InNode& n) override {
+        //NOTE - choose a path how to tell llvm ir
+        //       which function to send in .o file
+        //       it can be a syscall
+        //       or own library
+    }
+
+    void Visit(AST::PrintNode& n) override {
+        //NOTE - choose a path how to tell llvm ir
+        //       which function to send in .o file
+        //       it can be a syscall
+        //       or own library
+    }
+
+    void Visit(AST::ExpressionNode& n)              override {}
+    void Visit(AST::StatementNode& n)               override {}
+    void Visit(AST::ConditionalStatementNode& n)    override {}
+
+public: // helper methods
+    void pushScope() {
+        symbolScopes.emplace_back();
+    }
+
+    void popScope() {
+        if (!symbolScopes.empty()) {
+            symbolScopes.pop_back();
+        }
+    }
+
+    //NOTE - breaking srp maybe (sorry)
+    llvm::Value* createLLVMBinaryOp(const AST::BinaryOp& op, llvm::Value* left, llvm::Value* right) {
+        llvm::Value* curVal = nullptr;
+        switch (op) {
             case AST::BinaryOp::ADD:
                 curVal = builder.CreateAdd(left, right, "add");
                 break;
@@ -189,13 +280,7 @@ class LLVMPrinter : public Visitor {
 
             default:
                 throw std::runtime_error("Undefined binary op :(");
-
         }
+        return curVal;
     }
-
-    void Visit(AST::ForNode& n) override {
-
-
-    }
-
 };
