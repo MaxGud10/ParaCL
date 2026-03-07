@@ -10,8 +10,8 @@
 #include "log.h"
 #include "inode.hpp"
 #include "dot_printer.hpp"
-#include "llvm_printer.hpp"
 #include "tree_traverse.hpp"
+#include "llvm_printer.hpp"
 
 constexpr std::string_view DUMP_DIR = "./dumps/";
 constexpr std::string_view DOT_DIR  = "dot/";
@@ -40,45 +40,6 @@ std::string generateFileName(std::string_view prefix = "dot", std::string_view e
 
 int main(int argc, char **argv)
 {
-<<<<<<< Updated upstream
-=======
-    MSG("MACROSES:\n");
-    LOG("YYDEBUG: {}\n", YYDEBUG);
-    LOG("YY_FLEX_DEBUG: {}\n", YY_FLEX_DEBUG);
-
-    int status = 0;
-
-    Driver drv;
-
-    if (argc == 1)
-        status = drv.parse("-");
-    else
-    {
-        for (int i = 1; i < argc; ++i)
-        {
-            if (strcmp("--dump", argv[i]))
-            {
-                status = drv.parse(argv[i]);
-                if (status != 0)
-                    break;
-            }
-        }
-    }
-
-    if (status != 0)
-    {
-        std::cerr << "Parsing failed" << std::endl;
-        return status;
-    }
-
-    if (!drv.ast.globalScope || drv.ast.globalScope->nstms() == 0)
-    {
-        return 0;
-    }
-
-    LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
-
->>>>>>> Stashed changes
     try
     {
         MSG("MACROSES:\n");
@@ -102,62 +63,8 @@ int main(int argc, char **argv)
                 }
             }
         }
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 
         if (status != 0 || drv.ast.globalScope == nullptr)
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-        return 1;
-    }
-
-
-
-    // if (status == 0 && drv.ast.globalScope != nullptr)
-    // {
-    //     LOG("global statements amount: {}\n", drv.ast.globalScope->nstms());
-
-    //     if (drv.ast.globalScope->nstms() > 0)
-    //       drv.ast.eval();
-    //     else
-    //         std::cout << "No statements to execute" << std::endl;
-    // }
-    // else
-    //     std::cerr << "Parsing failed or AST not created" << std::endl;
-
-    // handling dump flag
-    for (int i = 0; i < argc; ++i)
-    {
-        if (!strcmp(argv[i], "--dump"))
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         {
             std::cerr << "Parsing failed or AST not created" << std::endl;
             return status != 0 ? status : 1;

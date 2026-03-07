@@ -22,18 +22,6 @@
 // JIT FOR FUTURE
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 
-const static llvm::FunctionType* printType = llvm::FunctionType::get(
-    llvm::Type::getVoidTy(context_),
-    { llvm::Type::getInt32Ty(context_) },
-    false // no varagrs
-);
-
-const static llvm::FunctionType* inType = llvm::FunctionType::get(
-    llvm::Type::getInt32Ty(context_),
-    { llvm::Type::getInt32Ty(context_) },
-    false // no varagrs
-);
-
 class LLVMPrinter : public Visitor {
 private:
         llvm::LLVMContext& context;
@@ -49,14 +37,15 @@ private:
 public: // constuctor/destructor
 
     LLVMPrinter(llvm::LLVMContext& ctx,
-                const std::string& moduleName = "paracl_module",
-                const std::string& targetTriple = llvm::sys::getDefaultTargetTriple())
+                const std::string& moduleName = "paracl_module"
+                /*const std::string& targetTriple */)
     : context(ctx),
       builder(ctx),
       module(std::make_unique<llvm::Module>(moduleName, ctx))
     {
-        module->setTargetTriple(targetTriple);
-        module->setDataLayout(llvm::DataLayout::getDefaultDataLayout(targetTriple));
+        //TODO
+        // module->setTargetTriple(targetTriple);
+        // module->setDataLayout(llvm::DataLayout::getDefaultDataLayout(targetTriple));
 
         pushScope(); // creating global scope
     }

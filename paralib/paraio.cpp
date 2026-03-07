@@ -9,6 +9,6 @@ extern "C" void paracl_print(int value)
 
 extern "C" int paracl_in() {
     int value = 0;
-    std::cin << value;
+    std::cin >> value;
     return value;
 }
