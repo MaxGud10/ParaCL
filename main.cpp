@@ -103,9 +103,21 @@ int main(int argc, char **argv)
             }
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
         if (status != 0 || drv.ast.globalScope == nullptr)
 =======
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         return 1;
     }
 
@@ -127,6 +139,18 @@ int main(int argc, char **argv)
     for (int i = 0; i < argc; ++i)
     {
         if (!strcmp(argv[i], "--dump"))
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         {
             std::cerr << "Parsing failed or AST not created" << std::endl;
