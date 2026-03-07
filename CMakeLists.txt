@@ -157,18 +157,18 @@ endif()
 add_executable(paracl main.cpp)
 target_link_libraries(paracl PRIVATE paracl_core ${LLVM_LIBS})
 
-add_executable(paracl_codegen main_codegen.cpp)
-target_link_libraries(paracl_codegen PRIVATE paracl_core paraio ${LLVM_LIBS})
+# add_executable(paracl_codegen main_codegen.cpp)
+# target_link_libraries(paracl_codegen PRIVATE paracl_core paraio ${LLVM_LIBS})
 
-target_compile_features(paracl_codegen PRIVATE cxx_std_20)
-set_target_properties(paracl_codegen PROPERTIES CXX_EXTENSIONS OFF)
+# target_compile_features(paracl_codegen PRIVATE cxx_std_20)
+# set_target_properties(paracl_codegen PROPERTIES CXX_EXTENSIONS OFF)
 
-target_include_directories(paracl_codegen PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/include/detail
-    ${CMAKE_BINARY_DIR}/parser
-    ${CMAKE_SOURCE_DIR}/utils
-)
+# target_include_directories(paracl_codegen PRIVATE
+    # ${CMAKE_SOURCE_DIR}/include
+    # ${CMAKE_SOURCE_DIR}/include/detail
+    # ${CMAKE_BINARY_DIR}/parser
+    # ${CMAKE_SOURCE_DIR}/utils
+# )
 
 target_compile_features(paracl PRIVATE cxx_std_20)
 set_target_properties(paracl PROPERTIES CXX_EXTENSIONS OFF)
@@ -228,7 +228,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         -fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
     )
 else()
-    target_compile_options(paracl_codegen PRIVATE ${RELEASE_COMPILE_OPTIONS})
+    # target_compile_options(paracl_codegen PRIVATE ${RELEASE_COMPILE_OPTIONS})
 endif()
 
 if(ENABLE_LOGGING)
@@ -236,7 +236,7 @@ if(ENABLE_LOGGING)
 endif()
 
 if(ENABLE_GRAMMAR_LOG)
-    target_compile_definitions(paracl_codegen PRIVATE YY_FLEX_DEBUG=1 YYDEBUG=1)
+    # target_compile_definitions(paracl_codegen PRIVATE YY_FLEX_DEBUG=1 YYDEBUG=1)
 else()
-    target_compile_definitions(paracl_codegen PRIVATE YY_FLEX_DEBUG=0 YYDEBUG=0)
+    # target_compile_definitions(paracl_codegen PRIVATE YY_FLEX_DEBUG=0 YYDEBUG=0)
 endif()

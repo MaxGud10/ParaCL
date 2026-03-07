@@ -22,8 +22,17 @@
 // JIT FOR FUTURE
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 
+const static llvm::FunctionType* printType = llvm::FunctionType::get(
+    llvm::Type::getVoidTy(context_),
+    { llvm::Type::getInt32Ty(context_) },
+    false // no varagrs
+);
 
-llvm::Value* createLLVMBinaryOp(AST::BinaryOp& op, llvm::Value* left, llvm::Value* right);
+const static llvm::FunctionType* inType = llvm::FunctionType::get(
+    llvm::Type::getInt32Ty(context_),
+    { llvm::Type::getInt32Ty(context_) },
+    false // no varagrs
+);
 
 class LLVMPrinter : public Visitor {
 private:
@@ -37,13 +46,32 @@ private:
 
         llvm::Value* curVal = nullptr;
 
-public: // visitors
+public: // constuctor/destructor
+
+    LLVMPrinter(llvm::LLVMContext& ctx,
+                const std::string& moduleName = "paracl_module",
+                const std::string& targetTriple = llvm::sys::getDefaultTargetTriple())
+    : context(ctx),
+      builder(ctx),
+      module(std::make_unique<llvm::Module>(moduleName, ctx))
+    {
+        module->setTargetTriple(targetTriple);
+        module->setDataLayout(llvm::DataLayout::getDefaultDataLayout(targetTriple));
+
+        pushScope(); // creating global scope
+    }
+
+    ~LLVMPrinter() {
+        popScope(); // deleting global scope
+    }
     void Visit(AST::ConstantNode& n) override {
         curVal = llvm::ConstantInt::get(
             context,
             llvm::APInt(32, n.get_val(), true)
         );
     }
+
+public: // visitors
 
     void Visit(AST::VariableNode& n) override {
         llvm::AllocaInst* allocated_val = nullptr;
@@ -184,17 +212,33 @@ public: // visitors
     }
 
     void Visit(AST::InNode& n) override {
-        //NOTE - choose a path how to tell llvm ir
-        //       which function to send in .o file
-        //       it can be a syscall
-        //       or own library
+
+        llvm::FunctionType* inType = llvm::FunctionType::get(
+        llvm::Type::getInt32Ty(context),
+        {},
+        false // no varagrs
+        );
+
+        auto* func = getOrCreateParaLibFunc("paracl_in", inType);
+        auto* val = builder.CreateCall(func, {});
+        curVal = val;
+
     }
 
     void Visit(AST::PrintNode& n) override {
-        //NOTE - choose a path how to tell llvm ir
-        //       which function to send in .o file
-        //       it can be a syscall
-        //       or own library
+
+        n.get_expr()->accept(*this);
+
+
+        llvm::FunctionType* printType = llvm::FunctionType::get(
+        llvm::Type::getVoidTy(context),
+        {llvm::Type::getInt32Ty(context)},
+        false // no varagrs
+        );
+
+        auto* func = getOrCreateParaLibFunc("paracl_print", printType);
+        auto* val = builder.CreateCall(func, curVal);
+
     }
 
     void Visit(AST::ExpressionNode& n)              override {}
@@ -211,6 +255,19 @@ public: // helper methods
             symbolScopes.pop_back();
         }
     }
+
+    llvm::Function* getOrCreateParaLibFunc(const std::string& name, llvm::FunctionType* type) {
+        if (auto* func = module->getFunction(name)) {
+            return func;
+        }
+        return llvm::Function::Create(
+            type,
+            llvm::Function::ExternalLinkage,  // <-- Важно!
+            name,
+            module.get()
+        );
+    }
+
 
     //NOTE - breaking srp maybe (sorry)
     llvm::Value* createLLVMBinaryOp(const AST::BinaryOp& op, llvm::Value* left, llvm::Value* right) {
