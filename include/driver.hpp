@@ -102,6 +102,7 @@ public:
 
 	void scan_end ()
 	{
-		fclose (yyin);
+		if (yyin && yyin != stdin)
+			fclose(yyin);
 	}
 };

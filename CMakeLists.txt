@@ -18,8 +18,6 @@ set(ENABLE_BD_TESTS ${ENABLE_BD_TESTS} CACHE BOOL "Enables big data tests" FORCE
 
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Build type")
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(RELEASE_COMPILE_OPTIONS
 	-O2
@@ -127,6 +125,7 @@ add_library(paracl_core
 
 add_library(paraio STATIC
     paralib/paraio.cpp
+    paralib/value_runtime.cpp
 )
 
 target_compile_features(paraio PUBLIC cxx_std_20)
@@ -167,6 +166,7 @@ target_include_directories(paracl_codegen PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include/detail
     ${CMAKE_BINARY_DIR}/parser
+	${CMAKE_SOURCE_DIR}/paralib
     ${CMAKE_SOURCE_DIR}/utils
 )
 
@@ -194,10 +194,9 @@ target_include_directories(paracl PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include/detail
     ${CMAKE_BINARY_DIR}/parser
+	${CMAKE_SOURCE_DIR}/paralib
 	${CMAKE_SOURCE_DIR}/utils
 )
-include_directories(${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
 
 if(ENABLE_LOGGING)
     target_compile_definitions(paracl PRIVATE ENABLE_LOGGING)
