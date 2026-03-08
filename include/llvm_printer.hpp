@@ -1152,7 +1152,7 @@ public:
 
         if (!captures.empty())
         {
-            uint64_t envSize = captures.size() * 8; 
+            uint64_t envSize = captures.size() * 8;
             llvm::Value* envSizeVal = llvm::ConstantInt::get(
                 llvm::Type::getInt64Ty(context),
                 envSize
