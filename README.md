@@ -86,6 +86,45 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=./third_party/con
 cmake --build build
 ```
 
+## BACKEND (LLVM Codegen)
+
+В проекте также реализован backend, который генерирует LLVM IR для языка ParaCL.
+Backend позволяет компилировать программу в промежуточное представление LLVM вместо интерпретации
+
+Он использует библиотеку LLVM для генерации IR и runtime-библиотеку из каталога [`paralib`](paralib/)
+
+Язык ParaCL является динамически типизированным, поэтому backend использует универсальный тип значения: `ParaValue`, который может хранить:
+```
+int
+closure
+```
+Все операции над значениями выполняются через runtime-функции
+
+
+## Запуск проекта
+После сборки появится файл:
+```
+build/paracl_codegen
+```
+
+Пример запуска:
+```
+./build/paracl_codegen unit_tests/data/common/basic_1.dat
+```
+Backend ParaCL генерирует LLVM IR.
+
+## Компиляция в нативный код через LLVM
+Пример:
+```
+./paracl_codegen prog.dat > out.ll
+clang++ out.ll ../paralib/paraio.cpp -lstdc++ -o out
+./out
+```
+> [!WARNING]
+> Команда компиляции должна выполняться из каталога build
+
+
+
 ## Тесты
 Проект содержит unit-тесты (GoogleTest)
 

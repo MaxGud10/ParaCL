@@ -18,8 +18,6 @@ set(ENABLE_BD_TESTS ${ENABLE_BD_TESTS} CACHE BOOL "Enables big data tests" FORCE
 
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Build type")
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(RELEASE_COMPILE_OPTIONS
 	-O2
@@ -35,7 +33,6 @@ set(RELEASE_COMPILE_OPTIONS
 	-Wcast-align
 	-Wpointer-arith
 	-Wunreachable-code
-	-Wno-pre-c++17-compat
 )
 
 set(DEBUG_COMPILE_OPTIONS
@@ -91,6 +88,19 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/parser)
 
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
+find_package(LLVM REQUIRED CONFIG)
+
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
+
+llvm_map_components_to_libnames(LLVM_LIBS
+  core
+  support
+  irreader
+)
 
 set(BISON_INPUT ${CMAKE_SOURCE_DIR}/grammar/parser.y)
 set(FLEX_INPUT ${CMAKE_SOURCE_DIR}/grammar/lexer.l)
@@ -112,6 +122,15 @@ add_library(paracl_core
     ${FLEX_Lexer_OUTPUTS}
     ${BISON_Parser_OUTPUTS}
 )
+
+add_library(paraio STATIC
+    paralib/paraio.cpp
+    paralib/value_runtime.cpp
+)
+
+target_compile_features(paraio PUBLIC cxx_std_20)
+set_target_properties(paraio PROPERTIES CXX_EXTENSIONS OFF)
+
 
 target_compile_features(paracl_core PUBLIC cxx_std_20)
 set_target_properties(paracl_core PROPERTIES CXX_EXTENSIONS OFF)
@@ -135,11 +154,25 @@ else()
 endif()
 
 add_executable(paracl main.cpp)
+target_link_libraries(paracl PRIVATE paracl_core ${LLVM_LIBS})
+
+add_executable(paracl_codegen main_codegen.cpp)
+target_link_libraries(paracl_codegen PRIVATE paracl_core paraio ${LLVM_LIBS})
+
+target_compile_features(paracl_codegen PRIVATE cxx_std_20)
+set_target_properties(paracl_codegen PROPERTIES CXX_EXTENSIONS OFF)
+
+target_include_directories(paracl_codegen PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/include/detail
+    ${CMAKE_BINARY_DIR}/parser
+	${CMAKE_SOURCE_DIR}/paralib
+    ${CMAKE_SOURCE_DIR}/utils
+)
 
 target_compile_features(paracl PRIVATE cxx_std_20)
 set_target_properties(paracl PROPERTIES CXX_EXTENSIONS OFF)
 
-target_link_libraries(paracl PRIVATE paracl_core)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(paracl PRIVATE DEBUG)
@@ -161,6 +194,7 @@ target_include_directories(paracl PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include/detail
     ${CMAKE_BINARY_DIR}/parser
+	${CMAKE_SOURCE_DIR}/paralib
 	${CMAKE_SOURCE_DIR}/utils
 )
 
@@ -183,4 +217,25 @@ if(ENABLE_GRAMMAR_LOG)
 	target_compile_definitions(paracl PRIVATE YY_FLEX_DEBUG=1 YYDEBUG=1)
 else()
 	target_compile_definitions(paracl PRIVATE YY_FLEX_DEBUG=0 YYDEBUG=0)
+endif()
+
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(paracl_codegen PRIVATE DEBUG)
+    target_compile_options(paracl_codegen PRIVATE ${DEBUG_COMPILE_OPTIONS})
+    target_link_options(paracl_codegen PRIVATE
+        -fsanitize=address,alignment,bool,bounds,float-cast-overflow,float-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
+    )
+else()
+    target_compile_options(paracl_codegen PRIVATE ${RELEASE_COMPILE_OPTIONS})
+endif()
+
+if(ENABLE_LOGGING)
+    target_compile_definitions(paracl_codegen PRIVATE ENABLE_LOGGING)
+endif()
+
+if(ENABLE_GRAMMAR_LOG)
+    target_compile_definitions(paracl_codegen PRIVATE YY_FLEX_DEBUG=1 YYDEBUG=1)
+else()
+    target_compile_definitions(paracl_codegen PRIVATE YY_FLEX_DEBUG=0 YYDEBUG=0)
 endif()

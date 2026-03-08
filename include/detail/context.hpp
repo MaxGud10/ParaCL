@@ -4,7 +4,6 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <cstddef>
 
 #include "value.hpp"
 #include "log.h"
@@ -20,25 +19,32 @@ public:
     using Name  = AST::detail::Name;
     using Frame = AST::detail::Frame;
 
-    std::ostream&         out;
-    FramePtr              current_;
-    std::vector<FramePtr> frames_pool_;
-
-    std::size_t callDepth_    = 0;
-    std::size_t maxCallDepth_ = 1000;
+    std::ostream& out;
+    FramePtr      current_;
 
 public:
     explicit Context(std::ostream& outputStream = std::cout)
         : out(outputStream)
     {
-        current_ = create_frame(nullptr);
+        current_ = std::make_shared<Frame>();
+        current_->parent = nullptr;
 
         LOG("CTX: init root frame ptr={}\n", static_cast<const void*>(current_.get()));
     }
 
     void push_scope()
     {
-        current_ = create_frame(current_);
+        auto newFrame = std::make_shared<Frame>();
+             newFrame->parent = current_;
+
+        LOG("CTX: push_scope: old={} new={} depth_before={}\n",
+            static_cast<const void*>(current_.get()),
+            static_cast<const void*>(newFrame.get()),
+            depth());
+
+        current_ = std::move(newFrame);
+
+        LOG("CTX: push_scope: depth_after={}\n", depth());
     }
 
     void pop_scope()
@@ -111,15 +117,6 @@ public:
         return false;
     }
 
-    FramePtr create_frame(FramePtr parent)
-    {
-        auto frame    = std::make_shared<Frame>();
-        frame->parent = std::move(parent);
-        frames_pool_.push_back(frame);
-
-        return frame;
-    }
-
     int depth() const
     {
         int depthValue = -1;
@@ -127,26 +124,6 @@ public:
             ++depthValue;
         return depthValue;
     }
-
-    void enter_call()
-    {
-        ++callDepth_;
-        if (callDepth_ > maxCallDepth_)
-            throw std::runtime_error("Maximum recursion depth exceeded ("   +
-                                        std::to_string(callDepth_   ) + "/" +
-                                        std::to_string(maxCallDepth_) + ")");
-    }
-
-    void exit_call()
-    {
-        if (callDepth_ > 0)
-            --callDepth_;
-    }
-
-    std::size_t get_call_depth()     const { return callDepth_;    }
-    std::size_t get_max_call_depth() const { return maxCallDepth_; }
-
-    void set_max_call_depth(std::size_t newLimit) { maxCallDepth_ = newLimit; }
 };
 
 } // namespace detail

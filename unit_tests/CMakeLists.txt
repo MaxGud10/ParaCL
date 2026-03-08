@@ -4,11 +4,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_package(GTest REQUIRED CONFIG)
+find_package(LLVM REQUIRED CONFIG)
 
 set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/")
-add_definitions(-DTEST_DATA_DIR=\"${TEST_DATA_DIR}\")
-
-find_package(GTest REQUIRED CONFIG)
 
 set(RELEASE_COMPILE_OPTIONS
 	-O2
@@ -24,7 +22,6 @@ set(RELEASE_COMPILE_OPTIONS
 	-Wcast-align
 	-Wpointer-arith
 	-Wunreachable-code
-	-Wno-pre-c++17-compat
 )
 
 set(DEBUG_COMPILE_OPTIONS
@@ -79,22 +76,41 @@ add_executable(unit_tests
     src/unit_tests.cpp
     main.cpp
 )
+set(LLVM_LINK_COMPONENTS
+    Support
+    Core
+)
 
+llvm_map_components_to_libnames(llvm_libs ${LLVM_LINK_COMPONENTS})
 
 target_link_libraries(unit_tests
     PRIVATE
         paracl_core
+		paraio
         GTest::gtest
         GTest::gtest_main
+		${llvm_libs}
 )
+
+# include_directories(${LLVM_INCLUDE_DIRS})
+# add_definitions(${LLVM_DEFINITIONS})
 
 target_include_directories(unit_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/test_utils
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include/detail
     ${CMAKE_BINARY_DIR}/parser
+	${CMAKE_SOURCE_DIR}/paralib
     ${CMAKE_SOURCE_DIR}/utils
 )
+
+target_compile_definitions(unit_tests PRIVATE
+    TEST_DATA_DIR="${TEST_DATA_DIR}"
+    PROJECT_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
+target_compile_features(unit_tests PRIVATE cxx_std_20)
+set_target_properties(unit_tests PROPERTIES CXX_EXTENSIONS OFF)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	target_compile_definitions(unit_tests PRIVATE DEBUG)

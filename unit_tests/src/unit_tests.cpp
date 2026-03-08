@@ -99,6 +99,52 @@ TEST(common, func_closure)         { test_utils::run_test("/common/func_closure"
 
 TEST(common, func_recursion)       { test_utils::run_test("/common/func_recursion"); }
 
+// ==================================================================================================
+TEST(codegen, basic_1)              { test_utils::run_codegen_test("/common/basic_1"); }
+TEST(codegen, local_variables)      { test_utils::run_codegen_test("/common/local_variables"); }
+TEST(codegen, if_1)                 { test_utils::run_codegen_test("/common/if_1"); }
+TEST(codegen, if_2)                 { test_utils::run_codegen_test("/common/if_2"); }
+TEST(codegen, while_1)              { test_utils::run_codegen_test("/common/while_1"); }
+TEST(codegen, while_uminus_logical) { test_utils::run_codegen_test("/common/while_uminus_logical"); }
+TEST(codegen, while_if_logical_mod) { test_utils::run_codegen_test("/common/while_if_logical_mod"); }
+TEST(codegen, expression_1)         { test_utils::run_codegen_test("/common/expression_1"); }
+TEST(codegen, scopes)               { test_utils::run_codegen_test("/common/scopes"); }
+TEST(codegen, for_1)                { test_utils::run_codegen_test("/common/for_1"); }
+TEST(codegen, for_sum)              { test_utils::run_codegen_test("/common/for_sum"); }
+TEST(codegen, if_else)              { test_utils::run_codegen_test("/common/if_else"); }
+TEST(codegen, else_if_1)            { test_utils::run_codegen_test("/common/else_if_1"); }
+TEST(codegen, else_if_2)            { test_utils::run_codegen_test("/common/else_if_2"); }
+TEST(codegen, for_if_else_complex)  { test_utils::run_codegen_test("/common/for_if_else_complex"); }
+TEST(codegen, print)                { test_utils::run_codegen_test("/common/printf"); }
+TEST(codegen, and_or)               { test_utils::run_codegen_test("/common/if_and_or"); }
+TEST(codegen, and_or_truth_table)   { test_utils::run_codegen_test("/common/and_or_truth_table"); }
+TEST(codegen, and_or_precedence)    { test_utils::run_codegen_test("/common/and_or_precedence"); }
+TEST(codegen, and_or_relational)    { test_utils::run_codegen_test("/common/and_or_relational"); }
+TEST(codegen, bitwise_and_or)       { test_utils::run_codegen_test("/common/bitwise_and_or"); }
+TEST(codegen, bitwise_basic)        { test_utils::run_codegen_test("/common/bitwise_basic"); }
+TEST(codegen, bitwise_precedence)   { test_utils::run_codegen_test("/common/bitwise_precedence"); }
+TEST(codegen, bitwise_flags)        { test_utils::run_codegen_test("/common/bitwise_flags"); }
+TEST(codegen, bitwise_in_if)        { test_utils::run_codegen_test("/common/bitwise_in_if"); }
+TEST(codegen, bitwise_in_while)     { test_utils::run_codegen_test("/common/bitwise_in_while");}
+TEST(codegen, bitwise_and_logical)  { test_utils::run_codegen_test("/common/bitwise_and_logical");}
+TEST(codegen, plus_assign_basic)    { test_utils::run_codegen_test("/common/plus_assign_basic"); }
+TEST(codegen, plus_assign_expr)     { test_utils::run_codegen_test("/common/plus_assign_expr"); }
+TEST(codegen, plus_assign_in_for)   { test_utils::run_codegen_test("/common/plus_assign_in_for"); }
+TEST(codegen, minus_assign_basic)   { test_utils::run_codegen_test("/common/minus_assign_basic"); }
+TEST(codegen, star_assign_basic)    { test_utils::run_codegen_test("/common/star_assign_basic"); }
+TEST(codegen, slash_assign_basic)   { test_utils::run_codegen_test("/common/slash_assign_basic"); }
+TEST(codegen, assign_combo)         { test_utils::run_codegen_test("/common/assign_combo"); }
+TEST(codegen, chain)                { test_utils::run_codegen_test("/common/chain"); }
+
+
+TEST(codegen, func_basic)     { test_utils::run_codegen_test("/common/func_basic"); }
+TEST(codegen, func_return)    { test_utils::run_codegen_test("/common/func_return"); }
+TEST(codegen, func_closure)   { test_utils::run_codegen_test("/common/func_closure"); }
+TEST(codegen, scope_value)    { test_utils::run_codegen_test("/common/scope_value"); }
+TEST(codegen, func_recursion) { test_utils::run_codegen_test("/common/func_recursion"); }
+
+// ==================================================================================================
+
 TEST(ASTTestBase, CreateConstant)
 {
     auto constNode = CONST(42);
