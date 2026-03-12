@@ -125,7 +125,6 @@ add_library(paracl_core
 
 add_library(paraio STATIC
     paralib/paraio.cpp
-    paralib/value_runtime.cpp
 )
 
 target_compile_features(paraio PUBLIC cxx_std_20)

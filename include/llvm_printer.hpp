@@ -4,7 +4,9 @@
 #include <unordered_map>
 #include "detail/ivisitor.hpp"
 #include "node.hpp"
-#include "value_runtime.hpp"
+#include "paraio.hpp"
+
+#include "log.h"
 
 // LLVM headers
 #include "llvm/IR/LLVMContext.h"
@@ -57,45 +59,45 @@ private:
         size_t currentFunctionScopeBase_ = 0;
 
 private:
-// TODO: убрать в log.h
-//
     void dbg(const std::string& msg) const
     {
-        llvm::errs() << "[LLVMPrinter] " << msg << "\n";
+        LLVM_MSGLN("[LLVMPrinter] " << msg);
     }
 
     void dbgValue(const char* label, llvm::Value* value) const
     {
-        llvm::errs() << "[LLVMPrinter] " << label << ": ";
+        LLVM_MSG("[LLVMPrinter] " << label << ": ");
         if (!value)
         {
-            llvm::errs() << "<null>\n";
+            LLVM_MSGLN("<null>");
             return;
         }
 
-        value->print(llvm::errs());
-        llvm::errs() << " | type=";
-        value->getType()->print(llvm::errs());
-        llvm::errs() << "\n";
+        LLVM_PRINT(value);
+        LLVM_MSG(" | type=");
+        LLVM_PRINT(value->getType());
+        LLVM_MSG("\n");
     }
 
     void dbgBlock(const char* label) const
     {
-        llvm::errs() << "[LLVMPrinter] " << label << ": ";
+        LLVM_MSG("[LLVMPrinter] " << label << ": ");
         if (!builder.GetInsertBlock())
         {
-            llvm::errs() << "<no insert block>\n";
+            LLVM_MSGLN("<no insert block>");
             return;
         }
 
-        llvm::errs() << builder.GetInsertBlock()->getName() << "\n";
+        LLVM_MSGLN(builder.GetInsertBlock()->getName());
     }
 
     void dbgFunctionIR(llvm::Function* fn) const
     {
-        llvm::errs() << "\n[LLVMPrinter] function dump: " << fn->getName() << "\n";
-        fn->print(llvm::errs());
-        llvm::errs() << "\n\n";
+        LLVM_MSGLN("");
+        LLVM_MSG("[LLVMPrinter] function dump: " << fn->getName() << "\n");
+        LLVM_PRINT(fn);
+        LLVM_MSGLN("");
+        LLVM_MSGLN("");
     }
 
 public: // constuctor/destructor
@@ -145,9 +147,11 @@ public:
                 llvm::Type::getInt32Ty(context), 0, true));
         }
 
-        llvm::errs() << "\n[LLVMPrinter] FULL MODULE BEFORE VERIFY\n";
-        module->print(llvm::errs(), nullptr);
-        llvm::errs() << "\n\n";
+        LLVM_MSGLN("");
+        LLVM_MSGLN("[LLVMPrinter] FULL MODULE BEFORE VERIFY");
+        LLVM_PRINT(module.get());
+        LLVM_MSGLN("");
+        LLVM_MSGLN("");
 
         std::string funcError;
         llvm::raw_string_ostream funcErrorStream(funcError);
@@ -186,18 +190,6 @@ private:
     {
         llvm::StructType* paraValueTy = getParaValueType();
 
-        llvm::FunctionType* printType = llvm::FunctionType::get(
-            llvm::Type::getVoidTy(context),
-            { llvm::Type::getInt32Ty(context) },
-            false
-        );
-
-        llvm::FunctionType* inType = llvm::FunctionType::get(
-            llvm::Type::getInt32Ty(context),
-            {},
-            false
-        );
-
         llvm::FunctionType* makeIntType = llvm::FunctionType::get(
             paraValueTy,
             { llvm::Type::getInt32Ty(context) },
@@ -222,45 +214,31 @@ private:
             false
         );
 
-        paraclPrintFn = llvm::Function::Create(
-            printType,
-            llvm::Function::ExternalLinkage,
-            "paracl_print",
-            module.get()
-        );
-
-        paraclInFn = llvm::Function::Create(
-            inType,
-            llvm::Function::ExternalLinkage,
-            "paracl_in",
-            module.get()
-        );
-
         paraclMakeIntFn = llvm::Function::Create(
             makeIntType,
             llvm::Function::ExternalLinkage,
-            "paracl_make_int",
+            "paracl_int",
             module.get()
         );
 
         paraclValueAsIntFn = llvm::Function::Create(
             valueAsIntType,
             llvm::Function::ExternalLinkage,
-            "paracl_value_as_int",
+            "paracl_as_int",
             module.get()
         );
 
         paraclInValueFn = llvm::Function::Create(
             inValueType,
             llvm::Function::ExternalLinkage,
-            "paracl_in_value",
+            "paracl_in",
             module.get()
         );
 
         paraclPrintValueFn = llvm::Function::Create(
             printValueType,
             llvm::Function::ExternalLinkage,
-            "paracl_print_value",
+            "paracl_print",
             module.get()
         );
 
@@ -297,35 +275,35 @@ private:
         paraclMakeClosureFn = llvm::Function::Create(
             makeClosureType,
             llvm::Function::ExternalLinkage,
-            "paracl_make_closure",
+            "paracl_closure",
             module.get()
         );
 
         paraclMakeClosureValueFn = llvm::Function::Create(
             makeClosureValueType,
             llvm::Function::ExternalLinkage,
-            "paracl_make_closure_value",
+            "paracl_closure_value",
             module.get()
         );
 
         paraclValueAsClosureFn = llvm::Function::Create(
             valueAsClosureType,
             llvm::Function::ExternalLinkage,
-            "paracl_value_as_closure",
+            "paracl_as_closure",
             module.get()
         );
 
         paraclCallClosureFn = llvm::Function::Create(
             callClosureType,
             llvm::Function::ExternalLinkage,
-            "paracl_call_closure",
+            "paracl_call",
             module.get()
         );
 
         paraclAllocEnvFn = llvm::Function::Create(
             allocEnvType,
             llvm::Function::ExternalLinkage,
-            "paracl_alloc_env",
+            "paracl_env_alloc",
             module.get()
         );
 
@@ -338,7 +316,7 @@ private:
         paraclClosureGetEnvFn = llvm::Function::Create(
             closureGetEnvType,
             llvm::Function::ExternalLinkage,
-            "paracl_closure_get_env",
+            "paracl_env",
             module.get()
         );
     }
@@ -1380,9 +1358,9 @@ public:
         curVal = value;
     }
 
-    void Visit(AST::ExpressionNode& n)              override {}
-    void Visit(AST::StatementNode& n)               override {}
-    void Visit(AST::ConditionalStatementNode& n)    override {}
+    void Visit(AST::ExpressionNode&)              override {}
+    void Visit(AST::StatementNode&)               override {}
+    void Visit(AST::ConditionalStatementNode&)    override {}
 
     llvm::Function* getOrCreateParaLibFunc(const std::string& name, llvm::FunctionType* type)
     {
