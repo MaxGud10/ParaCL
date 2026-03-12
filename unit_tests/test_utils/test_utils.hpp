@@ -145,7 +145,6 @@ inline std::string get_codegen_result(std::string_view file_name)
         "clang++ "
         + shell_escape(ll_path.string()) + " "
         + shell_escape(std::string(PROJECT_SOURCE_DIR) + "/paralib/paraio.cpp") + " "
-        + shell_escape(std::string(PROJECT_SOURCE_DIR) + "/paralib/value_runtime.cpp") + " "
         + "-std=c++17 -O0 -o "
         + shell_escape(exe_path.string())
         + " 2>&1";

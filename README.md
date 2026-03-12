@@ -115,14 +115,11 @@ Backend ParaCL генерирует LLVM IR.
 
 ## Компиляция в нативный код через LLVM
 Пример:
-```
-./paracl_codegen prog.dat > out.ll
-clang++ out.ll ../paralib/paraio.cpp -lstdc++ -o out
+```bash
+./build/paracl_codegen unit_tests/data/common/func_basic.dat > out.ll
+clang++ out.ll ./paralib/paraio.cpp -lstdc++ -o out
 ./out
 ```
-> [!WARNING]
-> Команда компиляции должна выполняться из каталога build
-
 
 
 ## Тесты

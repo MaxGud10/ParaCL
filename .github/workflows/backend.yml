@@ -1,11 +1,12 @@
-name: Simple CI
+name: Backend CI
 
 on:
   push:
   pull_request:
 
 jobs:
-  build:
+  backend:
+    name: Backend / LLVM codegen
     runs-on: ubuntu-latest
 
     steps:
@@ -20,6 +21,7 @@ jobs:
             cmake \
             flex \
             bison \
+            clang \
             python3-venv \
             python3-pip
 
@@ -27,14 +29,14 @@ jobs:
         run: |
           python3 -m venv .venv
           source .venv/bin/activate
-          pip3 install conan
+          pip install conan
 
-      - name: Conan profile detect
+      - name: Detect Conan profile
         run: |
           source .venv/bin/activate
           conan profile detect --force
 
-      - name: Install project dependencies via Conan
+      - name: Install dependencies
         run: |
           source .venv/bin/activate
           conan install . --output-folder=third_party --build=missing
@@ -47,9 +49,24 @@ jobs:
 
       - name: Build project
         run: |
-          cmake --build build
+          cmake --build build --parallel
 
-      - name: Run tests
+      - name: Run backend gtests
         working-directory: build
         run: |
-          ctest --output-on-failure
+          ./unit_tests/unit_tests --gtest_filter=codegen.*
+
+      - name: Generate LLVM IR
+        run: |
+          ./build/paracl_codegen unit_tests/data/common/func_basic.dat > out.ll 2> out.err
+          test -s out.ll
+          test ! -s out.err
+
+      - name: Build generated program
+        run: |
+          clang++ out.ll ./paralib/paraio.cpp -lstdc++ -o out
+
+      - name: Run generated program
+        run: |
+          ./out > program.out
+          diff -u <(printf "42\n") program.out
