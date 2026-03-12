@@ -120,9 +120,6 @@ Backend ParaCL генерирует LLVM IR.
 clang++ out.ll ./paralib/paraio.cpp -lstdc++ -o out
 ./out
 ```
-> [!WARNING]
-> Команда компиляции должна выполняться из каталога build
-
 
 
 ## Тесты

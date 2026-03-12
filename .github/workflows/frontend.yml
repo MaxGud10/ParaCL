@@ -1,11 +1,12 @@
-name: Simple CI
+name: Frontend CI
 
 on:
   push:
   pull_request:
 
 jobs:
-  build:
+  frontend:
+    name: Frontend / Interpreter
     runs-on: ubuntu-latest
 
     steps:
@@ -27,14 +28,14 @@ jobs:
         run: |
           python3 -m venv .venv
           source .venv/bin/activate
-          pip3 install conan
+          pip install conan
 
-      - name: Conan profile detect
+      - name: Detect Conan profile
         run: |
           source .venv/bin/activate
           conan profile detect --force
 
-      - name: Install project dependencies via Conan
+      - name: Install dependencies
         run: |
           source .venv/bin/activate
           conan install . --output-folder=third_party --build=missing
@@ -47,7 +48,7 @@ jobs:
 
       - name: Build project
         run: |
-          cmake --build build
+          cmake --build build --parallel
 
       - name: Run tests
         working-directory: build
