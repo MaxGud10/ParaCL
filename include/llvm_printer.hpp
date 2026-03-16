@@ -373,8 +373,8 @@ private:
             paraValueTy,
             {
                 getClosurePtrType(),                           // self
-                llvm::PointerType::getUnqual(paraValueTy),    // args
-                llvm::Type::getInt32Ty(context)               // argc
+                llvm::PointerType::getUnqual(paraValueTy),     // args
+                llvm::Type::getInt32Ty(context)                // argc
             },
             false
         );
