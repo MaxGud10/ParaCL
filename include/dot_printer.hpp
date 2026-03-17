@@ -197,27 +197,27 @@ public:
 
 
 
-    void Visit(const AST::ConditionalStatementNode& node) const override {}
-    void Visit(const AST::StatementNode& node) const override {}
-    void Visit(const AST::ExpressionNode& node) const override {}
+    void Visit(const AST::ConditionalStatementNode&) const override {}
+    void Visit(const AST::StatementNode&)            const override {}
+    void Visit(const AST::ExpressionNode&)           const override {}
 
-    void Visit (AST::StatementNode& node)           override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit (AST::ExpressionNode& node)          override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(AST::ConditionalStatementNode& node) override {throw std::runtime_error("TreeTraverse::Visit const not implemented");  }
-    void Visit(AST::ForNode&      node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::ConstantNode& node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::AssignNode&   node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::WhileNode&    node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::IfNode&       node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::InNode&       node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::VariableNode& node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::BinaryOpNode& node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::UnaryOpNode&  node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::PrintNode&    node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::ScopeNode&    node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::FunctionNode& node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::CallNode&     node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
-    void Visit(AST::ReturnNode&   node) override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::StatementNode&)            override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(AST::ExpressionNode&)           override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(AST::ConditionalStatementNode&) override {throw std::runtime_error("TreeTraverse::Visit const not implemented");  }
+    void Visit(AST::ForNode&)                  override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::ConstantNode&)             override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::AssignNode&)               override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::WhileNode&)                override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::IfNode&)                   override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::InNode&)                   override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::VariableNode&)             override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::BinaryOpNode&)             override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::UnaryOpNode&)              override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::PrintNode&)                override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::ScopeNode&)                override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::FunctionNode&)             override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::CallNode&)                 override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
+    void Visit(AST::ReturnNode&)               override { throw std::runtime_error("DotPrinter::Visit non-const not implemented"); }
 
 };
 

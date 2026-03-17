@@ -281,8 +281,9 @@ public:
 
 class VoidNode final : public ExpressionNode
 {
-    void accept(      Visitor& visitor)       override {}
-    void accept(const Visitor& visitor) const override {}
+public:
+    void accept(      Visitor&)       override {}
+    void accept(const Visitor&) const override {}
 };
 
 } // namespace AST

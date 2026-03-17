@@ -436,27 +436,27 @@ public:
         throw ReturnSignal{Value{0}};
     }
 
-    void Visit(AST::ConditionalStatementNode& node) override {}
-    void Visit(AST::StatementNode& node) override {}
-    void Visit(AST::ExpressionNode& node) override {}
+    void Visit(AST::ConditionalStatementNode&) override {}
+    void Visit(AST::StatementNode&)            override {}
+    void Visit(AST::ExpressionNode&)           override {}
 
-    void Visit (const AST::StatementNode& node)             const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit (const AST::ExpressionNode& node)            const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::ConditionalStatementNode& node)   const override {throw std::runtime_error("TreeTraverse::Visit const not implemented");  }
-    void Visit(const AST::ScopeNode&   )                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::ForNode&     )                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::ConstantNode&)                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::AssignNode&  )                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::WhileNode&   )                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::IfNode&      )                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::InNode&      )                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::VariableNode&)                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::BinaryOpNode&)                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::UnaryOpNode& )                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::PrintNode&   )                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::FunctionNode&)                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::CallNode&    )                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
-    void Visit(const AST::ReturnNode&  )                    const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit (const AST::StatementNode&          ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit (const AST::ExpressionNode&         ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::ConditionalStatementNode&) const override {throw std::runtime_error("TreeTraverse::Visit const not implemented");  }
+    void Visit(const AST::ScopeNode&               ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::ForNode&                 ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::ConstantNode&            ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::AssignNode&              ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::WhileNode&               ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::IfNode&                  ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::InNode&                  ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::VariableNode&            ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::BinaryOpNode&            ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::UnaryOpNode&             ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::PrintNode&               ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::FunctionNode&            ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::CallNode&                ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
+    void Visit(const AST::ReturnNode&              ) const override { throw std::runtime_error("TreeTraverse::Visit const not implemented"); }
 };
 
 namespace TestUtils

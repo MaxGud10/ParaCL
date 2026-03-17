@@ -28,7 +28,6 @@ class StatementNode;
 
 class Visitor {
     public:
-
         virtual void Visit (AST::ConditionalStatementNode& node)    = 0;
         virtual void Visit (AST::StatementNode& node)               = 0;
         virtual void Visit (AST::ExpressionNode& node)              = 0;
