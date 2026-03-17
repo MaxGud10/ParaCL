@@ -255,12 +255,16 @@ class CallNode final : public ExpressionNode
 {
     ExprPtr              callee_;
     std::vector<ExprPtr> args_;
+    bool is_tail_call_ = false;
 public:
     CallNode(ExprPtr callee, std::vector<ExprPtr> args)
         : callee_(callee), args_(std::move(args)) {}
 
     void accept(      Visitor& visitor)       override {visitor.Visit(*this);}
     void accept(const Visitor& visitor) const override {visitor.Visit(*this);}
+
+    bool is_tail_call() const { return is_tail_call_; }
+    void set_tail_call(bool val) { is_tail_call_ = val; }
 
 public:
           ExprPtr get_callee() const { return callee_; }

@@ -10,6 +10,7 @@
 #include "detail/context.hpp"
 #include "detail/value.hpp"
 #include "log.h"
+#include "analyze/tail_call_analyze.hpp"
 
 struct ReturnSignal
 {
@@ -62,6 +63,12 @@ private:
         if (std::holds_alternative<int>(value))
             return "int";
         return "func";
+    }
+
+    void clear_stack() {
+        while (!eval_stack_.empty()) {
+            eval_stack_.pop();
+        }
     }
 
     void push_value(const Value& value)
@@ -355,8 +362,11 @@ public:
 
         if (functionNode.has_internal_name())
         {
+
             functionObject->internalName    = functionNode.get_internal_name();
             functionObject->hasInternalName = true;
+
+            ctx_.current_->vars[functionObject->internalName] = functionObject;
 
             auto recursiveEnvironment    = std::make_shared<AST::detail::Frame>();
             recursiveEnvironment->parent = ctx_.current_;
@@ -364,7 +374,10 @@ public:
             functionObject->env          = recursiveEnvironment;
 
             LOG("FUNC: internalName='{}'\n", functionObject->internalName);
+            TailCallAnalyzer analyzer(functionObject->internalName);
+            analyzer.analyze(functionObject->body);
         }
+
 
         push_value(Value{functionObject});
     }
@@ -391,6 +404,11 @@ public:
         if (evaluatedArguments.size() != functionObject->params.size())
             throw std::runtime_error("Arity mismatch in function call");
 
+        if (callNode.is_tail_call()) {
+            MSG("CALL: TCO detected, reusing frame\n");
+            throw TailCallSignal(std::move(evaluatedArguments));
+        }
+
         auto savedFrame   = ctx_.current_;
         auto callFrame    = std::make_shared<AST::detail::Frame>();
         callFrame->parent = functionObject->env;
@@ -403,21 +421,36 @@ public:
         }
 
         ctx_.current_ = callFrame;
+        while (true) {
+            try
+            {
+                functionObject->body->accept(*this);
+                Value functionResult = pop_value();
+                ctx_.current_ = savedFrame;
 
-        try
-        {
-            functionObject->body->accept(*this);
-            Value functionResult = pop_value();
-            ctx_.current_ = savedFrame;
-
-            LOG("CALL: normal return kind={}\n", value_kind(functionResult));
-            push_value(functionResult);
-        }
-        catch (const ReturnSignal& returnSignal)
-        {
-            ctx_.current_ = savedFrame;
-            LOG("CALL: explicit return kind={}\n", value_kind(returnSignal.value));
-            push_value(returnSignal.value);
+                LOG("CALL: normal return kind={}\n", value_kind(functionResult));
+                push_value(functionResult);
+                break;
+            }
+            catch (const ReturnSignal& returnSignal)
+            {
+                ctx_.current_ = savedFrame;
+                LOG("CALL: explicit return kind={}\n", value_kind(returnSignal.value));
+                push_value(returnSignal.value);
+                break;
+            }
+            catch (const TailCallSignal& tcoSignal) {
+                ctx_.current_ = savedFrame;
+                MSG("TCO CALL caught! \n");
+                for (size_t index = 0; index < tcoSignal.args.size(); ++index)
+                {
+                    std::string_view paramName = functionObject->params[index];
+                    savedFrame->vars[paramName] = tcoSignal.args[index];
+                    LOG("CALL: TCO update param '{}'\n", std::string(paramName).c_str());
+                }
+                clear_stack();
+                continue;
+            }
         }
     }
 
