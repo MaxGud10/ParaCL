@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     {
         SemanticAnalyzer semantic(drv.node_locations);
         semantic.analyze(drv.ast);
-        
+
         llvm::LLVMContext context;
         LLVMPrinter printer(context);
 
@@ -37,6 +37,11 @@ int main(int argc, char** argv)
         printer.dump(llvm::outs());
     }
 
+    catch (const SemanticError& e)
+    {
+        std::cerr << e.what() << '\n';
+        return 1;
+    }
     catch (const std::exception& e)
     {
         std::cerr << "Codegen error: " << e.what() << '\n';

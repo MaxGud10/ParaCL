@@ -109,6 +109,11 @@ int main(int argc, char **argv)
 
         return status;
     }
+    catch (const SemanticError& exception)
+    {
+        std::cerr << exception.what() << std::endl;
+        return 2;
+    }
     catch (const std::exception& exception)
     {
         std::cerr << "Runtime error: " << exception.what() << std::endl;
