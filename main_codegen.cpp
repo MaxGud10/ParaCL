@@ -3,6 +3,7 @@
 
 #include "driver.hpp"
 #include "llvm_printer.hpp"
+#include "semantic_analyzer.hpp"
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/raw_ostream.h"
@@ -26,13 +27,16 @@ int main(int argc, char** argv)
 
     try
     {
+        SemanticAnalyzer semantic(drv.node_locations);
+        semantic.analyze(drv.ast);
+        
         llvm::LLVMContext context;
         LLVMPrinter printer(context);
 
         printer.generate(drv.ast);
         printer.dump(llvm::outs());
     }
-    
+
     catch (const std::exception& e)
     {
         std::cerr << "Codegen error: " << e.what() << '\n';

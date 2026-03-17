@@ -281,6 +281,7 @@ public:
 
 class VoidNode final : public ExpressionNode
 {
+public:
     void accept(      Visitor& visitor)       override {}
     void accept(const Visitor& visitor) const override {}
 };

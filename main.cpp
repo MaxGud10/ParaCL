@@ -13,6 +13,7 @@
 #include "llvm_printer.hpp"
 #include "tree_traverse.hpp"
 #include "llvm_printer.hpp"
+#include "semantic_analyzer.hpp"
 
 constexpr std::string_view DUMP_DIR = "./dumps/";
 constexpr std::string_view DOT_DIR  = "dot/";
@@ -70,6 +71,9 @@ int main(int argc, char **argv)
             std::cerr << "Parsing failed or AST not created" << std::endl;
             return status != 0 ? status : 1;
         }
+
+        SemanticAnalyzer semantic(drv.node_locations);
+        semantic.analyze(drv.ast);
 
         TreeTraverse traverse(drv.ast.getCtx());
 

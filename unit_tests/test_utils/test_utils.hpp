@@ -1,6 +1,7 @@
 #pragma once
 
 #include "driver.hpp"
+#include "semantic_analyzer.hpp"
 #include "log.h"
 #include "tree_traverse.hpp"
 #include "llvm_printer.hpp"
@@ -31,11 +32,16 @@ std::string get_result(std::string_view file_name)
 
 
     status = drv.parse(std::string(file_name));
+    EXPECT_EQ(status, 0);
+
+    if (status != 0)
+        throw std::runtime_error("Parser failed");
+
+    SemanticAnalyzer semantic(drv.node_locations);
+    semantic.analyze(drv.ast);
 
     TreeTraverse traverse(drv.ast.getCtx());
     drv.ast.accept(traverse);
-
-    EXPECT_EQ(status, 0);
 
     std::string result_str;
     std::getline(result, result_str, '\0');
@@ -127,6 +133,9 @@ inline std::string get_codegen_result(std::string_view file_name)
 
     if (status != 0)
         throw std::runtime_error("Parser failed for codegen test");
+
+    SemanticAnalyzer semantic(drv.node_locations);
+    semantic.analyze(drv.ast);
 
     llvm::LLVMContext llvm_ctx;
     LLVMPrinter printer(llvm_ctx);

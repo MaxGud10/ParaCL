@@ -85,7 +85,6 @@ public:
     virtual void accept(      Visitor& visitor)       = 0;
     virtual void accept(const Visitor& visitor) const = 0;
     virtual ~INode() = default;
-
 };
 
 } // namespace AST
