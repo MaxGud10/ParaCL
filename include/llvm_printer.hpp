@@ -61,11 +61,14 @@ private:
 private:
     void dbg(const std::string& msg) const
     {
+        (void)msg;
         LLVM_MSGLN("[LLVMPrinter] " << msg);
     }
 
     void dbgValue(const char* label, llvm::Value* value) const
     {
+        (void)label;
+        (void)value;
         LLVM_MSG("[LLVMPrinter] " << label << ": ");
         if (!value)
         {
@@ -81,6 +84,7 @@ private:
 
     void dbgBlock(const char* label) const
     {
+        (void)label;
         LLVM_MSG("[LLVMPrinter] " << label << ": ");
         if (!builder.GetInsertBlock())
         {
@@ -93,6 +97,7 @@ private:
 
     void dbgFunctionIR(llvm::Function* fn) const
     {
+        (void)fn;
         LLVM_MSGLN("");
         LLVM_MSG("[LLVMPrinter] function dump: " << fn->getName() << "\n");
         LLVM_PRINT(fn);
