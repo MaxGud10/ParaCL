@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+// #define ENABLE_LOGGING
+
 #if defined(__has_include)
 #  if __has_include(<format>)
 #    include <format>
@@ -29,7 +31,7 @@
 #define LOG(msg, ...)                                                          \
     do                                                                         \
     {                                                                          \
-        std::clog << __FUNCTION__ << ": "                                      \
+        std::clog << __FUNCTION__ << ": ";                                     \
         std::clog << std::format(msg, __VA_ARGS__);                            \
     }                                                                          \
     while (false)
@@ -59,11 +61,11 @@
     while (false)
 
 #define LLVM_PRINT(value)                                                      \
-    do                                                                         \
-    {                                                                          \
-        (value)->print(llvm::errs());                                          \
-    }                                                                          \
-    while (false)
+    // do                                                                         \
+    // {                                                                          \
+    //     (value)->print(llvm::errs());                                          \
+    // }                                                                          \
+    // while (false)
 
 #else
 

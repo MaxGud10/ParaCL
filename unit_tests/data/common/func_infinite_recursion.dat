@@ -1,0 +1,9 @@
+fact = func(x, y) : factorial {
+  res = x * y;
+  print(res);
+  return factorial(res, y - 1);
+};
+
+fact(5, 4);
+
+
