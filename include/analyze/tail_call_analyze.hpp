@@ -115,8 +115,7 @@ private:
         inTailPosition_ = wasTail;
     }
 
-    void Visit(AST::FunctionNode& functionNode) override {
-    }
+    void Visit(AST::FunctionNode& ) override {}
 
     void Visit(AST::ConstantNode&) override {}
     void Visit(AST::VariableNode&) override {}
