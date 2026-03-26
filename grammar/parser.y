@@ -89,6 +89,9 @@
 %nterm <AST::FunctionNode*>     FunctionLit
 %nterm <AST::ExpressionNode*>   NonFunctionPrimary
 %nterm <AST::ExpressionNode*>   NonFunctionPostfix
+%nterm <AST::ExpressionNode*>   NonFunctionExpr
+%nterm <AST::UnaryOpNode*>      NonFunctionUnaryOp
+%nterm <AST::BinaryOpNode*>     NonFunctionBinaryOp
 %nterm <AST::ExpressionNode*>   Primary
 %nterm <AST::ExpressionNode*>   Postfix
 
@@ -274,7 +277,7 @@ While_Stm:	WHILE "(" Expr ")" Statement
 				$$ = drv.attach_location(drv.bld.create<AST::WhileNode>($3, $5), @$);
 			};
 
-Assign: Variable "=" NonFunctionPostfix
+Assign: Variable "=" NonFunctionExpr
         {
             $$ = drv.attach_location(
                 drv.bld.create<AST::AssignNode>($1, $3),
@@ -338,6 +341,87 @@ Expr:   Postfix
 			$$ = $1;
 		}
 	| Assign { $$ = $1; };
+
+NonFunctionExpr:
+            NonFunctionPostfix
+            {
+                $$ = $1;
+            }
+        |   NonFunctionBinaryOp
+            {
+                $$ = $1;
+            }
+        |   NonFunctionUnaryOp
+            {
+                $$ = $1;
+            }
+        |   Assign
+            {
+                $$ = $1;
+            };
+
+NonFunctionBinaryOp:
+            NonFunctionExpr "+" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::ADD, $3), @$);
+            }
+        |   NonFunctionExpr "-" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::SUB, $3), @$);
+            }
+        |   NonFunctionExpr "*" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::MUL, $3), @$);
+            }
+        |   NonFunctionExpr "/" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::DIV, $3), @$);
+            }
+        |   NonFunctionExpr ">" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::GR, $3), @$);
+            }
+        |   NonFunctionExpr "<" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::LS, $3), @$);
+            }
+        |   NonFunctionExpr ">=" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::GR_EQ, $3), @$);
+            }
+        |   NonFunctionExpr "<=" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::LS_EQ, $3), @$);
+            }
+        |   NonFunctionExpr "==" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::EQ, $3), @$);
+            }
+        |   NonFunctionExpr "!=" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::NOT_EQ, $3), @$);
+            }
+        |   NonFunctionExpr "&&" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::AND, $3), @$);
+            }
+        |   NonFunctionExpr "||" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::OR, $3), @$);
+            }
+        |   NonFunctionExpr "&" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::BIT_AND, $3), @$);
+            }
+        |   NonFunctionExpr "|" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::BIT_OR, $3), @$);
+            }
+        |   NonFunctionExpr "%" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::MOD, $3), @$);
+            }
+        ;
 
 BinaryOp: 	Expr "+" Expr
 			{
@@ -415,6 +499,15 @@ BinaryOp: 	Expr "+" Expr
 				$$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::MOD, $3), @$);
 			};
 
+NonFunctionUnaryOp:
+            "-" NonFunctionExpr %prec UMINUS
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::UnaryOpNode>($2, AST::UnaryOp::NEG), @$);
+            }
+        |   "!" NonFunctionExpr %prec NOT
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::UnaryOpNode>($2, AST::UnaryOp::NOT), @$);
+            };
 
 UnaryOp	: 	"-" Expr %prec UMINUS
 			{
