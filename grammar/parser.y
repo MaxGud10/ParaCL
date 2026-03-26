@@ -79,6 +79,7 @@
 %nterm <AST::UnaryOpNode*> 		UnaryOp
 %nterm <AST::BinaryOpNode*> 	BinaryOp
 %nterm <AST::AssignNode*> 		Assign
+%nterm <AST::AssignNode*>       FunctionAssign
 %nterm <AST::ScopeNode*> 		Scope
 %nterm <AST::PrintNode*> 		Print
 %nterm <AST::IfNode*> 			If_Stm
@@ -86,6 +87,11 @@
 %nterm <AST::WhileNode*> 		While_Stm
 %nterm <AST::VariableNode*> 	Variable
 %nterm <AST::FunctionNode*>     FunctionLit
+%nterm <AST::ExpressionNode*>   NonFunctionPrimary
+%nterm <AST::ExpressionNode*>   NonFunctionPostfix
+%nterm <AST::ExpressionNode*>   NonFunctionExpr
+%nterm <AST::UnaryOpNode*>      NonFunctionUnaryOp
+%nterm <AST::BinaryOpNode*>     NonFunctionBinaryOp
 %nterm <AST::ExpressionNode*>   Primary
 %nterm <AST::ExpressionNode*>   Postfix
 
@@ -106,6 +112,9 @@
 %right "print"
 %right "while"
 %right "for"
+
+%precedence FUNC_ASSIGN_NO_SEMI
+%precedence ";"
 
 %right "=" "+=" "-=" "*=" "/=" "%="
 
@@ -156,6 +165,20 @@ Statement:
 			{
 				MSG("Void statement\n");
 				$$ = drv.attach_location(drv.bld.create<AST::VoidNode>(), @$);
+			}
+		|   FunctionAssign %prec FUNC_ASSIGN_NO_SEMI
+			{
+				LOG("It's FunctionAssign without semicolon. Moving from concrete rule: {}\n",
+					static_cast<const void*>($1));
+
+				$$ = $1;
+			}
+		|   FunctionAssign ";"
+			{
+				LOG("It's FunctionAssign with semicolon. Moving from concrete rule: {}\n",
+					static_cast<const void*>($1));
+
+				$$ = $1;
 			}
 		|	Expr ";"
 			{
@@ -254,11 +277,14 @@ While_Stm:	WHILE "(" Expr ")" Statement
 				$$ = drv.attach_location(drv.bld.create<AST::WhileNode>($3, $5), @$);
 			};
 
-Assign: Variable "=" Expr
-		{
-			$$ = drv.attach_location(drv.bld.create<AST::AssignNode>($1, $3), @$);
-			LOG("Initialising assignment: {}\n", static_cast<const void*>($$));
-		}
+Assign: Variable "=" NonFunctionExpr
+        {
+            $$ = drv.attach_location(
+                drv.bld.create<AST::AssignNode>($1, $3),
+                @$
+            );
+            LOG("Initialising assignment: {}\n", static_cast<const void*>($$));
+        }
     |   Variable "+=" Expr
         {
 			auto oldX = drv.attach_location(drv.bld.create<AST::VariableNode>(drv.bld.intern($1->get_name())), @1);
@@ -284,6 +310,15 @@ Assign: Variable "=" Expr
 			$$ = drv.attach_location(drv.bld.create<AST::AssignNode>($1, val), @$);
         };
 
+FunctionAssign: Variable "=" FunctionLit
+				{
+					$$ = drv.attach_location(
+						drv.bld.create<AST::AssignNode>($1, $3), @$);
+
+					LOG("Initialising function assignment: {}\n",
+						static_cast<const void*>($$));
+				};
+
 Print: 	"print" Expr
 		{
 			MSG("Initialising print\n");
@@ -306,6 +341,87 @@ Expr:   Postfix
 			$$ = $1;
 		}
 	| Assign { $$ = $1; };
+
+NonFunctionExpr:
+            NonFunctionPostfix
+            {
+                $$ = $1;
+            }
+        |   NonFunctionBinaryOp
+            {
+                $$ = $1;
+            }
+        |   NonFunctionUnaryOp
+            {
+                $$ = $1;
+            }
+        |   Assign
+            {
+                $$ = $1;
+            };
+
+NonFunctionBinaryOp:
+            NonFunctionExpr "+" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::ADD, $3), @$);
+            }
+        |   NonFunctionExpr "-" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::SUB, $3), @$);
+            }
+        |   NonFunctionExpr "*" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::MUL, $3), @$);
+            }
+        |   NonFunctionExpr "/" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::DIV, $3), @$);
+            }
+        |   NonFunctionExpr ">" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::GR, $3), @$);
+            }
+        |   NonFunctionExpr "<" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::LS, $3), @$);
+            }
+        |   NonFunctionExpr ">=" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::GR_EQ, $3), @$);
+            }
+        |   NonFunctionExpr "<=" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::LS_EQ, $3), @$);
+            }
+        |   NonFunctionExpr "==" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::EQ, $3), @$);
+            }
+        |   NonFunctionExpr "!=" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::NOT_EQ, $3), @$);
+            }
+        |   NonFunctionExpr "&&" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::AND, $3), @$);
+            }
+        |   NonFunctionExpr "||" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::OR, $3), @$);
+            }
+        |   NonFunctionExpr "&" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::BIT_AND, $3), @$);
+            }
+        |   NonFunctionExpr "|" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::BIT_OR, $3), @$);
+            }
+        |   NonFunctionExpr "%" NonFunctionExpr
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::MOD, $3), @$);
+            }
+        ;
 
 BinaryOp: 	Expr "+" Expr
 			{
@@ -383,6 +499,15 @@ BinaryOp: 	Expr "+" Expr
 				$$ = drv.attach_location(drv.bld.create<AST::BinaryOpNode>($1, AST::BinaryOp::MOD, $3), @$);
 			};
 
+NonFunctionUnaryOp:
+            "-" NonFunctionExpr %prec UMINUS
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::UnaryOpNode>($2, AST::UnaryOp::NEG), @$);
+            }
+        |   "!" NonFunctionExpr %prec NOT
+            {
+                $$ = drv.attach_location(drv.bld.create<AST::UnaryOpNode>($2, AST::UnaryOp::NOT), @$);
+            };
 
 UnaryOp	: 	"-" Expr %prec UMINUS
 			{
@@ -463,6 +588,47 @@ FunctionLit: FUNC "(" ParamListOpt ")" NameOpt Scope
 				std::string_view fname = hasName ? drv.bld.intern($5) : std::string_view{};
 
 				$$ = drv.attach_location(drv.bld.create<AST::FunctionNode>(std::move(params), $6, fname, hasName), @$);
+            };
+
+NonFunctionPrimary:
+            NUMBER
+            {
+                MSG("Initialising ConstantNode\n");
+                $$ = drv.attach_location(drv.bld.create<AST::ConstantNode>($1), @1);
+            }
+        |   "?"
+            {
+                MSG("Initialising InNode\n");
+                $$ = drv.attach_location(drv.bld.create<AST::InNode>(), @1);
+            }
+        |   Variable
+            {
+                MSG("Moving VariableNode\n");
+                $$ = $1;
+            }
+        |   "(" Expr ")"
+            {
+                MSG("Moving Expression in parenthesis\n");
+                $$ = $2;
+            }
+        |   "(" Scope ")"
+            {
+                MSG("Moving Scope as expression\n");
+                $$ = $2;
+            };
+
+NonFunctionPostfix:
+            NonFunctionPrimary
+            {
+                $$ = $1;
+            }
+        |   NonFunctionPostfix "(" ArgListOpt ")"
+            {
+                MSG("Initialising CallNode\n");
+                $$ = drv.attach_location(
+                    drv.bld.create<AST::CallNode>($1, std::move($3)),
+                    @$
+                );
             };
 
 Primary:    NUMBER
