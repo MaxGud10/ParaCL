@@ -79,6 +79,7 @@
 %nterm <AST::UnaryOpNode*> 		UnaryOp
 %nterm <AST::BinaryOpNode*> 	BinaryOp
 %nterm <AST::AssignNode*> 		Assign
+%nterm <AST::AssignNode*>       FunctionAssign
 %nterm <AST::ScopeNode*> 		Scope
 %nterm <AST::PrintNode*> 		Print
 %nterm <AST::IfNode*> 			If_Stm
@@ -86,6 +87,8 @@
 %nterm <AST::WhileNode*> 		While_Stm
 %nterm <AST::VariableNode*> 	Variable
 %nterm <AST::FunctionNode*>     FunctionLit
+%nterm <AST::ExpressionNode*>   NonFunctionPrimary
+%nterm <AST::ExpressionNode*>   NonFunctionPostfix
 %nterm <AST::ExpressionNode*>   Primary
 %nterm <AST::ExpressionNode*>   Postfix
 
@@ -106,6 +109,9 @@
 %right "print"
 %right "while"
 %right "for"
+
+%precedence FUNC_ASSIGN_NO_SEMI
+%precedence ";"
 
 %right "=" "+=" "-=" "*=" "/=" "%="
 
@@ -156,6 +162,20 @@ Statement:
 			{
 				MSG("Void statement\n");
 				$$ = drv.attach_location(drv.bld.create<AST::VoidNode>(), @$);
+			}
+		|   FunctionAssign %prec FUNC_ASSIGN_NO_SEMI
+			{
+				LOG("It's FunctionAssign without semicolon. Moving from concrete rule: {}\n",
+					static_cast<const void*>($1));
+
+				$$ = $1;
+			}
+		|   FunctionAssign ";"
+			{
+				LOG("It's FunctionAssign with semicolon. Moving from concrete rule: {}\n",
+					static_cast<const void*>($1));
+
+				$$ = $1;
 			}
 		|	Expr ";"
 			{
@@ -254,11 +274,14 @@ While_Stm:	WHILE "(" Expr ")" Statement
 				$$ = drv.attach_location(drv.bld.create<AST::WhileNode>($3, $5), @$);
 			};
 
-Assign: Variable "=" Expr
-		{
-			$$ = drv.attach_location(drv.bld.create<AST::AssignNode>($1, $3), @$);
-			LOG("Initialising assignment: {}\n", static_cast<const void*>($$));
-		}
+Assign: Variable "=" NonFunctionPostfix
+        {
+            $$ = drv.attach_location(
+                drv.bld.create<AST::AssignNode>($1, $3),
+                @$
+            );
+            LOG("Initialising assignment: {}\n", static_cast<const void*>($$));
+        }
     |   Variable "+=" Expr
         {
 			auto oldX = drv.attach_location(drv.bld.create<AST::VariableNode>(drv.bld.intern($1->get_name())), @1);
@@ -283,6 +306,15 @@ Assign: Variable "=" Expr
 			auto val  = drv.attach_location(drv.bld.create<AST::BinaryOpNode>(oldX, AST::BinaryOp::DIV, $3), @$);
 			$$ = drv.attach_location(drv.bld.create<AST::AssignNode>($1, val), @$);
         };
+
+FunctionAssign: Variable "=" FunctionLit
+				{
+					$$ = drv.attach_location(
+						drv.bld.create<AST::AssignNode>($1, $3), @$);
+
+					LOG("Initialising function assignment: {}\n",
+						static_cast<const void*>($$));
+				};
 
 Print: 	"print" Expr
 		{
@@ -463,6 +495,47 @@ FunctionLit: FUNC "(" ParamListOpt ")" NameOpt Scope
 				std::string_view fname = hasName ? drv.bld.intern($5) : std::string_view{};
 
 				$$ = drv.attach_location(drv.bld.create<AST::FunctionNode>(std::move(params), $6, fname, hasName), @$);
+            };
+
+NonFunctionPrimary:
+            NUMBER
+            {
+                MSG("Initialising ConstantNode\n");
+                $$ = drv.attach_location(drv.bld.create<AST::ConstantNode>($1), @1);
+            }
+        |   "?"
+            {
+                MSG("Initialising InNode\n");
+                $$ = drv.attach_location(drv.bld.create<AST::InNode>(), @1);
+            }
+        |   Variable
+            {
+                MSG("Moving VariableNode\n");
+                $$ = $1;
+            }
+        |   "(" Expr ")"
+            {
+                MSG("Moving Expression in parenthesis\n");
+                $$ = $2;
+            }
+        |   "(" Scope ")"
+            {
+                MSG("Moving Scope as expression\n");
+                $$ = $2;
+            };
+
+NonFunctionPostfix:
+            NonFunctionPrimary
+            {
+                $$ = $1;
+            }
+        |   NonFunctionPostfix "(" ArgListOpt ")"
+            {
+                MSG("Initialising CallNode\n");
+                $$ = drv.attach_location(
+                    drv.bld.create<AST::CallNode>($1, std::move($3)),
+                    @$
+                );
             };
 
 Primary:    NUMBER
