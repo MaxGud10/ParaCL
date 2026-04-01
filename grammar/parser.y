@@ -325,7 +325,6 @@ Print: 	"print" Expr
 			$$ = drv.attach_location(drv.bld.create<AST::PrintNode>($2), @$);
 		}
 
-
 Expr:   Postfix
         {
 			$$ = $1;
@@ -518,7 +517,7 @@ UnaryOp	: 	"-" Expr %prec UMINUS
 			{
 				MSG("Initialising NOT operation\n");
 				$$ = drv.attach_location(drv.bld.create<AST::UnaryOpNode>($2, AST::UnaryOp::NOT), @$);
-			};
+			};x
 
 Variable: 	ID
 			{
